@@ -1090,6 +1090,17 @@ content:"";position:absolute;left:0;right:0;top:50%;height:44px;transform:transl
 .rsMej{color:var(--good);font-weight:700}
 .rsEst{font-size:10px;font-weight:800;padding:1px 5px;border-radius:6px;background:#e7edf1;color:#5b7384}
 .rB .dsq{color:#a25510;font-weight:800;font-size:12px}
+/* Cabecera de mínimas del ranking (§4.90). Borde discontinuo: es una referencia, no una nadadora. */
+.mRef{background:var(--surface);border:1px dashed #a3cdd6;border-radius:16px;padding:10px 12px;margin-bottom:8px}
+.mRefT{font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:6px}
+.mRefG{display:grid;grid-template-columns:auto 1fr 1fr 1fr 1fr;column-gap:6px;row-gap:3px;align-items:baseline;text-align:right}
+.mRefG .hd2{font-size:12px;font-weight:700;color:var(--ink);text-align:center;border-bottom:1px solid var(--line);padding-bottom:2px}
+.mRefG .hd{font-size:9px;font-weight:700;letter-spacing:.03em;color:var(--muted)}
+.mRefG .mono{font-size:13px;color:var(--ink-soft)}
+.mRefG .mono.na{color:var(--muted)}
+.mRefG .sep{padding-left:6px;border-left:1px solid var(--line)}
+.mRefG .hd2.sep{border-left:0;padding-left:0}
+.mRefG .ry{font-size:12px;font-weight:700;color:var(--ink);text-align:left}
 </style>
 </head>
 <body>
@@ -1548,7 +1559,10 @@ function fillCats(){
         +cs.map(c=>`<button data-c="${c}"${c===catHist?' class="on"':''}>${CAT_LAB[c]}</button>`).join("");}
   }
 }
-function fillYears(only){const seg=el("segYear");if(!seg)return;const all=[...new Set(ALLRECS.filter(r=>(isHist()||seasonOf(r.fecha)===season)&&(!catFilter||catFilter==="all"||grupoDe(r.anio,r.fecha)===catFilter)).map(claveEdad).filter(Boolean))].sort();const ys=(only&&only.length)?only.slice().sort():all;
+/* Las claves de año (o cohorte) del ámbito: las que pinta el selector de año. La usan `fillYears` y la
+   cabecera de mínimas del ranking (`minRefCard`, §4.90), para que las dos digan siempre lo mismo (§0.7). */
+function clavesAmbito(){return [...new Set(ALLRECS.filter(r=>(isHist()||seasonOf(r.fecha)===season)&&(!catFilter||catFilter==="all"||grupoDe(r.anio,r.fecha)===catFilter)).map(claveEdad).filter(Boolean))].sort();}
+function fillYears(only){const seg=el("segYear");if(!seg)return;const all=clavesAmbito();const ys=(only&&only.length)?only.slice().sort():all;
   /* ⚠️ `0607` NO es una clave de fila —ninguna nadadora tiene `claveEdad()==="0607"`—, así que esta
      criba la habría borrado en el primer repintado y «Abs joven» se habría apagado solo. Sobrevive
      mientras exista alguno de los dos años que representa. */
@@ -2006,7 +2020,22 @@ function jorList(recs){return [...new Set(recs.map(jorK))].sort();}
    quedan describiendo listas distintas. Se recalculan juntos, siempre, desde aquí. */
 function setRecs(rs){RECORDS=rs;
   MAXFECHA=RECORDS.reduce((m,r)=>r.fecha>m?r.fecha:m,RECORDS[0]?RECORDS[0].fecha:"");MAXJOR=jorList(RECORDS).slice(-1)[0]||"";}
-function summaryFechas(){return jorList(RECORDS).reverse();}
+function summaryFechas(){return jorList(RECORDS).filter(f=>provComp(compProv(f))).reverse();}
+/* COMPETICIONES POR PROVINCIA (Fran, 22-nov-2026, DIARIO §8). Con una provincia elegida, la banda
+   «Competiciones» enseña solo las suyas. Una jornada nadada es de la provincia de la MAYORÍA de sus filas
+   (por CLUB_PROV; así el Getxo Saria, abierto, es de Bizkaia). Los Ctos. de España y de Euskal Herria son de
+   todas («all»). Una próxima del CALENDARIO lleva `prov` si se le pone; sin él, Cto España/EH → todas y el
+   resto → Álava (el calendario heredado es el de la FAN). ⚠️ Una entrada nueva de otra provincia, con `prov`. */
+const COMP_TODAS=/^(Cto\.? (de )?España|Cto\.? (EH|Euskal Herria))/i;
+let _CPROV={},_CPROVN="";
+function compProv(f){const n=ALLRECS.length;if(n+""!==_CPROVN){_CPROV={};_CPROVN=n+"";}
+  if(_CPROV[f]!==undefined)return _CPROV[f];const c={};let comp="";
+  ALLRECS.forEach(r=>{if(jorK(r)!==f)return;comp=r.competi;const p=CLUB_PROV[r.club];if(p)c[p]=(c[p]||0)+1;});
+  let best="all",bn=0;if(!COMP_TODAS.test(comp))Object.keys(c).forEach(p=>{if(c[p]>bn){bn=c[p];best=p;}});
+  return _CPROV[f]=best;}
+function calProv(e){return e.prov||(COMP_TODAS.test(e.n)?"all":"Álava");}
+function provComp(p){return provFilter==="all"||p==="all"||p===provFilter;}
+function provMaxJor(){return summaryFechas()[0]||"";}
 // ---- Parciales y pacing (ficha) ----
 /* ===== Análisis de ritmo (calibrado con datos reales alevín + literatura de pacing) =====
    Métrica: caída relativa (%) entre tramos, no segundos fijos (escala con el nivel de cada una).
@@ -3395,7 +3424,7 @@ function calDisputada(e){
   if(n!==_CALJN){_CALJ=new Set();[ALLRECS,(typeof ALLDSQ!=="undefined"?ALLDSQ:[]),(typeof ALLNOOF!=="undefined"?ALLNOOF:[])].forEach(L=>L.forEach(r=>_CALJ.add(r.fecha+"|"+calNorm(r.competi))));_CALJN=n;}
   return _CALJ.has(e.f+"|"+calNorm(e.n));}
 /* Solo la temporada que se está viendo y nunca en Histórico; filtrado por el GRUPO de categoría. */
-function calScope(){if(isHist())return [];const L=CALENDARIO[season]||[];return L.filter(e=>e.cat.indexOf(catFilter)>=0&&!calDisputada(e));}
+function calScope(){if(isHist())return [];const L=CALENDARIO[season]||[];return L.filter(e=>e.cat.indexOf(catFilter)>=0&&!calDisputada(e)&&provComp(calProv(e)));}
 /* El botón de cerrar lo usan el resumen y la tarjeta de próxima: un solo sitio, un solo id. */
 const SUM_CLOSE='<button class="sumClose" id="sumClose">← Volver a la lista</button>';
 const CAL_DS=["dom","lun","mar","mié","jue","vie","sáb"],CAL_MS=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
@@ -3615,12 +3644,12 @@ function renderSummary(fecha){
      Ahora se repliega a la última jornada del ámbito nuevo y se cierra el cuerpo del resumen.
      Es el guardarraíl único: cubre también el cambio de sexo y —importante para septiembre— el de
      temporada, donde la jornada vieja NUNCA existe en la nueva. */
-  let FE=fecha||MAXJOR;
+  let FE=fecha||provMaxJor();
   /* Una próxima se elige con la clave «CAL|id». Si deja de estar en el ámbito (otra categoría, otra
      temporada, o ya entró su acta) se repliega igual que una jornada huérfana. */
   let calE=null;
-  if(String(FE).indexOf("CAL|")===0){calE=CALS.find(e=>"CAL|"+e.id===FE)||null;if(!calE){FE=MAXJOR;sumFecha=null;sumShown=false;sumOpen=false;}}
-  if(!calE&&FE&&!RECORDS.some(r=>jorK(r)===FE)){FE=MAXJOR;sumFecha=null;sumShown=false;sumOpen=false;}
+  if(String(FE).indexOf("CAL|")===0){calE=CALS.find(e=>"CAL|"+e.id===FE)||null;if(!calE){FE=provMaxJor();sumFecha=null;sumShown=false;sumOpen=false;}}
+  if(!calE&&FE&&(!RECORDS.some(r=>jorK(r)===FE)||!provComp(compProv(FE)))){FE=provMaxJor();sumFecha=null;sumShown=false;sumOpen=false;}
   let h="";
   if(calE)h=calCard(calE);
   else if(FE){
@@ -3886,6 +3915,22 @@ function sinTiempoRow(p,anio,anim,stamp){
   const eh=minRef(PAR_EH,p,anio),es=minRef(PAR_ESP,p,anio);if(!eh&&!es)return"";
   const ln=(m,lab)=>`<span class="mlab">${lab}</span>`+(m?`<span class="mmin"><i>mín.</i><span class="mono">${esc(m)}</span></span>`:`<span class="tag na">sin mínima</span>`)+`<span></span>`;
   return `<div class="pRow mmRow mmSin" style="${anim}"><div class="mHead"><div><div class="prueba ${stKlass(p)}">${esc(p)}</div>${stamp||""}</div></div><div class="pmin">${ln(eh,"EH")}${ln(es,"ESP")}</div></div>`;}
+/* CABECERA DE MÍNIMAS DEL RANKING (Fran, 22-nov-2026, §4.90 del diario de Ranking Álava; variante A sobre muestra; aquí DIARIO §8). Encima de la lista de
+   la pestaña Mínimas, la mínima EH y ESP de la prueba en las DOS piscinas, una fila por año (o cohorte) del
+   ámbito: las del selector de año, y si hay uno elegido, solo esa. Las tablas son las de la temporada que se ve
+   (PAR_EH/PAR_ESP) y la clave es la de `claveEdad`, que ya es clave de tabla (`abs` en absoluto). Una celda sin
+   dato va con «—»; un año sin ninguna, fuera; sin ninguna fila, sin cabecera. Ni en Histórico ni en las no
+   oficiales (esas llevan sus líneas orientativas). Solo pinta: no toca puestos ni diferencias. */
+function minRefCard(p){
+  if(!minsOn()||esNoof(p))return"";
+  const cel=(par,i,k)=>{const tb=(parOf(par)[i]||{})[sexFilter]||{};return (tb[p]&&tb[p][k])||null;};
+  const ks=clavesAmbito().filter(k=>yearAll()||yearOn(k));
+  const filas=ks.map(k=>{const v=[cel(PAR_EH,0,k),cel(PAR_EH,1,k),cel(PAR_ESP,0,k),cel(PAR_ESP,1,k)];
+    if(!v.some(Boolean))return"";
+    const c=(x,sep)=>`<div class="mono${sep?" sep":""}${x?"":" na"}">${x?esc(x):"—"}</div>`;
+    return `<div class="ry">${k==="abs"?"Abs.":esc(k)}</div>${c(v[0])}${c(v[1])}${c(v[2],1)}${c(v[3])}`;}).join("");
+  if(!filas)return"";
+  return `<div class="mRef"><div class="mRefT">Mínimas · ${esc(p)}</div><div class="mRefG"><div></div><div class="hd2" style="grid-column:2/4">EH</div><div class="hd2 sep" style="grid-column:4/6">ESP</div><div></div><div class="hd">25 m</div><div class="hd">50 m</div><div class="hd sep">25 m</div><div class="hd">50 m</div>${filas}</div></div>`;}
 function p50Pill(){return '<span class="mb mb50">50m</span>';}
 function pisPill(){return '<span class="pis50">Piscina 50m</span>';}
 function hasMinCs(cs,prueba,anio,tbl,fecha){const tb=tbl[sexFilter]||{};const m=tb[prueba]&&tb[prueba][keyAnio(anio,fecha)];if(!m)return false;return cs-toCs(m)<=0;}
@@ -4697,7 +4742,10 @@ function render(){
      +"esa marca se nadó en piscina larga, así que se compara con la tabla de 50 m, que pide otros tiempos.<br>"
      +"A veces no. El tiempo grande de la derecha es siempre su <b>mejor marca</b>, porque es la que ordena esta lista, "
      +"y puede pasar que tenga otra marca de 50 m más lenta que sí llega a la mínima larga. Entonces la pastilla baja "
-     +"al lado del club, entera ("+pisPill()+") y con ese otro tiempo: es el que se compara con EH y ESP.</div>",
+     +"al lado del club, entera ("+pisPill()+") y con ese otro tiempo: es el que se compara con EH y ESP.</div>"
+     +"<div style='margin-top:9px;padding-top:9px;border-top:1px solid var(--line)'><span style='font-weight:700'>Recuadro de arriba.</span><br>"
+     +"Las mínimas de la prueba, EH y ESP, en piscina de 25 y de 50 m, una fila por año de nacimiento "
+     +"(si eliges un año, solo el suyo). «—»: esa tabla no tiene mínima para esa prueba y año.</div>",
     minimasFicha:"La <b>mínima</b> es el tiempo que hay que hacer para poder nadar el campeonato de "
      +"<b style='color:var(--brand)'>Euskal Herria</b> (EH) o el de <b style='color:var(--brand)'>España</b> (ESP) de su edad. "
      +"Cada prueba lleva una barra por cada una: <b style='color:#0c7c55'>−</b> en verde, ya conseguida · "
@@ -4836,7 +4884,7 @@ function render(){
     return `<div class="row" style="border-left-color:${m.rail}"><div class="rkwrap"><div class="rk" style="background:${m.bg};color:${m.ink}">${r.rank}</div>${posTag(r,prev)}</div><div class="mid"><div class="name" data-n="${esc(r.name)}">${esc(r.name)}</div><div class="club">${CLUB_PROV[r.club]?`<span class="ptag">${PROV_AB[CLUB_PROV[r.club]]}</span>`:""}${esc(r.club)} · ${esc(r.anio)}${badges}</div>${sub}</div><div class="right">${right}</div></div>`;
   }).join("");
   const body=rk.length?`<div class="list">${rows}</div>`:`<div class="empty">Sin ${sexFilter==="M"?"nadadores":"nadadoras"} para esta selección.</div>`;
-  vw.innerHTML=`<div class="chipwrap"><div class="chips">${chips}</div></div>${body}`;
+  vw.innerHTML=`<div class="chipwrap"><div class="chips">${chips}</div></div>${view==="minimas"?minRefCard(activePrueba):""}${body}`;
   animateTags(vw);
   const ce=vw.querySelector(".chips");
   if(ce){
@@ -5453,7 +5501,7 @@ el("clubSel").addEventListener("change",e=>{clubFilter=e.target.value;render();}
 (function(){const box=el("provBox");const P=["all","Álava","Bizkaia","Gipuzkoa","Navarra"];
  box.innerHTML=P.map(p=>`<button data-p="${p}"${p==="all"?' class="on"':''}>${p==="all"?"Todas":p}</button>`).join("");
  box.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;box.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));
-  provFilter=b.dataset.p;if(clubFilter!=="all"&&!provOk(clubFilter))clubFilter="all";fillClubs();render();});
+  provFilter=b.dataset.p;if(clubFilter!=="all"&&!provOk(clubFilter))clubFilter="all";fillClubs();renderSummary(sumFecha);render();});
 })();
 
 el("seasonSel").addEventListener("change",e=>{season=e.target.value;yearFilter=[];clubFilter="all";query="";badgesFor=null;cmpA=null;cmpB=null;compsFor=null;compFecha=null;const s=el("search");if(s)s.value="";applySex();});
