@@ -1795,7 +1795,7 @@ function parseCSV(t){const L=t.replace(/\r/g,"").split("\n").filter(x=>x.trim())
     if(r.tiempo){if(esNoof(r.prueba))ALLNOOF.push(r);else out.push(r);continue;}
     if(String(o.Estado||"").trim().toUpperCase()==="DSQ")ALLDSQ.push({prueba:r.prueba,nadadora:r.nadadora,anio:r.anio,club:r.club,fecha:r.fecha,competi:r.competi,sexo:r.sexo,motivo:(o.Motivo||"").trim()});
   }unifyNames([out,ALLDSQ,ALLNOOF]);return out;}
-/* MISMO NADADOR, DOS GRAFÍAS (22-nov-2026, DIARIO §4). Las actas escriben a veces el mismo nombre con o sin
+/* MISMO NADADOR, DOS GRAFÍAS (22-nov-2026, DIARIO §6). Las actas escriben a veces el mismo nombre con o sin
    tilde o en mayúsculas («SÁNCHEZ LOPETEGUI, Erika» / «SANCHEZ…»; «…, KHARLA» / «…, Kharla»). data.csv no se
    toca, así que se unen AL LEER: misma normName + mismo año + mismo club → la grafía más repetida (en empate,
    la que no va toda en mayúsculas). Sin esto la ficha salía partida y una de las dos, muda. */
