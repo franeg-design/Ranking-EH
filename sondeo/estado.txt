@@ -1,0 +1,10 @@
+ala_competiciones.html: curl: (6) Could not resolve host: www.alavesanatacion.org 000 0 http://www.alavesanatacion.org/competiciones.php 
+live_index.html: curl: (56) CONNECT tunnel failed, response 403 000 0 https://live.swimrankings.net/ 
+live_11735.html: curl: (56) CONNECT tunnel failed, response 403 000 0 https://live.swimrankings.net/11735/ 
+live_11569.html: curl: (56) CONNECT tunnel failed, response 403 000 0 https://live.swimrankings.net/11569/ 
+nav_competiciones.html: curl: (56) CONNECT tunnel failed, response 403 000 0 https://nueva.fnn-nif.com/competicionesnat 
+nav_www.html: curl: (56) CONNECT tunnel failed, response 403 000 0 https://www.fnn-nif.com/ 
+biz_calendario.html: curl: (56) CONNECT tunnel failed, response 403 000 0 https://bizkaiaigeri.es/calendario.php?id=1 
+biz_calendario_www.html: curl: (56) CONNECT tunnel failed, response 403 000 0 https://www.bizkaiaigeri.es/calendario.php?id=1 
+gip_calendario.html: curl: (56) CONNECT tunnel failed, response 403 000 0 https://docs.google.com/spreadsheets/d/1Q_wDpaVzMsjZrwmkRHtsnMUFpgUqtiaZ/htmlview 
+gip_gif.html: curl: (56) CONNECT tunnel failed, response 403 000 0 https://www.gif.eus/ 
