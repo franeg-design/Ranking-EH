@@ -722,6 +722,7 @@ select.seasonSel{appearance:none;-webkit-appearance:none;padding:5px 24px 5px 12
 .rmDet .rmDetT{font-size:12px;font-weight:700;color:#8a6512;margin-bottom:2px}
 .rmDetR{margin-top:6px}.rmDetR .rmPs{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
 .sNum{display:inline-block;min-width:22px;font-size:11px;font-weight:700;color:var(--muted)}
+.noofLbl{display:inline-block;border:1px dashed currentColor;border-radius:999px;padding:1px 8px;text-transform:none;letter-spacing:0;font-size:12px}
 .sumNote{font-size:11px;color:var(--muted);margin:8px 2px 0;line-height:1.4}
 .scat:first-child{margin-top:2px;padding-top:0;border-top:none}
 @keyframes vfade{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
@@ -2020,7 +2021,22 @@ function jorList(recs){return [...new Set(recs.map(jorK))].sort();}
    quedan describiendo listas distintas. Se recalculan juntos, siempre, desde aquí. */
 function setRecs(rs){RECORDS=rs;
   MAXFECHA=RECORDS.reduce((m,r)=>r.fecha>m?r.fecha:m,RECORDS[0]?RECORDS[0].fecha:"");MAXJOR=jorList(RECORDS).slice(-1)[0]||"";}
-function summaryFechas(){return jorList(RECORDS).filter(f=>provComp(compProv(f))).reverse();}
+function summaryFechas(){const o=jorList(RECORDS),nj=noofJor(),all=[...new Set(o.concat(nj))].sort();return all.filter(f=>provComp(compProv(f))).reverse();}
+/* JORNADAS SOLO CON PRUEBAS NO OFICIALES (Fran, 22-nov-2026, DIARIO §9). En Álava nunca hubo una (todas
+   tenían alguna oficial); la 1ª Alevín de Navarra solo nadó 25 Espalda y 300 Libre. Entran en la banda
+   con su propio resumen (`noofCard`): sin FINA, mínimas ni insignias, solo los primeros de cada prueba. */
+function noofJor(){const has=new Set(RECORDS.map(jorK));return [...new Set(poolRecs(noofScope()).map(jorK))].filter(f=>!has.has(f));}
+function noofCard(FE){const FD=jorD(FE),L=poolRecs(noofScope()).filter(r=>jorK(r)===FE);if(!L.length)return"";
+  const comp=L[0].competi||"Competición",sw=new Set(L.map(r=>r.nadadora));
+  const ps=[...new Set(L.map(r=>r.prueba))].sort((a,b)=>(PRUEBA_ORDER.indexOf(a)-PRUEBA_ORDER.indexOf(b))||a.localeCompare(b));
+  const md=["🥇","🥈","🥉"],GK=r=>claveMed(r.anio,FD);
+  let h=`<div class="sumcard"><div class="sumhead">🏆 <b>${esc(comp)}</b><span class="sumdate">· ${fmtDate(FD)}</span></div>`
+   +`<div class="sumstats"><div class="sst"><span class="n">${sw.size}</span>${sexFilter==="M"?"nadadores":"nadadoras"}</div><div class="sst"><span class="n">${L.length}</span>marcas</div><div class="sst"><span class="n">${ps.length}</span>prueba${ps.length===1?"":"s"}</div></div>`
+   +`<div class="sumNote" style="margin:0 2px 8px">Solo se nadaron pruebas no oficiales: no dan puntos FINA, mínimas ni insignias.</div>`;
+  ps.forEach(p=>{const rk=noofRank(L,p);const gs=grupoAnios([...new Set(rk.map(GK))],FD);
+    h+=`<div class="sumline"><span class="lbl"><span class="pr ${stKlass(p)} noofLbl">${esc(p)}</span></span>`+gs.map(gg=>{const top=rk.filter(r=>GK(r)===gg.anio).slice(0,3);
+      return (gg.cab?`<div class="scat">${esc(gg.cab)}</div>`:"")+((gs.length>1&&gg.lab)?`<div class="syear">${esc(gg.lab)}</div>`:"")+top.map((r,i)=>{const j=top.findIndex(x=>x.cs===r.cs);return `<div class="sitem">${md[j]} ${esc(shortName(r.name))} · <span class="mono">${esc(r.tiempo)}</span></div>`;}).join("");}).join("")+`</div>`;});
+  return h+SUM_CLOSE+`</div>`;}
 /* COMPETICIONES POR PROVINCIA (Fran, 22-nov-2026, DIARIO §8). Con una provincia elegida, la banda
    «Competiciones» enseña solo las suyas. Una jornada nadada es de la provincia de la MAYORÍA de sus filas
    (por CLUB_PROV; así el Getxo Saria, abierto, es de Bizkaia). Los Ctos. de España y de Euskal Herria son de
@@ -3649,13 +3665,14 @@ function renderSummary(fecha){
      temporada, o ya entró su acta) se repliega igual que una jornada huérfana. */
   let calE=null;
   if(String(FE).indexOf("CAL|")===0){calE=CALS.find(e=>"CAL|"+e.id===FE)||null;if(!calE){FE=provMaxJor();sumFecha=null;sumShown=false;sumOpen=false;}}
-  if(!calE&&FE&&(!RECORDS.some(r=>jorK(r)===FE)||!provComp(compProv(FE)))){FE=provMaxJor();sumFecha=null;sumShown=false;sumOpen=false;}
+  if(!calE&&FE&&((!RECORDS.some(r=>jorK(r)===FE)&&noofJor().indexOf(FE)<0)||!provComp(compProv(FE)))){FE=provMaxJor();sumFecha=null;sumShown=false;sumOpen=false;}
   let h="";
   if(calE)h=calCard(calE);
   else if(FE){
   const FD=jorD(FE);
   const latest=RECORDS.filter(r=>jorK(r)===FE);
-  if(!latest.length){box.innerHTML="";return;}
+  if(!latest.length)h=noofCard(FE);
+  if(latest.length){
   const comp=latest[0].competi||"Última competición";
   /* Mejor marca anterior SIN corte de temporada (ago-2026): así en la primera jornada de una
      temporada nueva las estrellas y las mínimas nuevas comparan con la marca real del año pasado. */
@@ -3719,12 +3736,12 @@ function renderSummary(fecha){
   h+=SUM_CLOSE;
   h+=`</div>`;  // cierra .sumcard
   }
-  }
+  }}
   const fechas=summaryFechas();
   /* Disputadas: las jornadas con filas y, entre ellas por fecha, las del calendario que ya pasaron
      sin acta cargada. Próximas: arriba, de la más cercana a la más lejana. Cuántas se ven: §4.89, más abajo. */
   const hoy=hoyISO();
-  const disp=fechas.map(f=>{const c=(RECORDS.find(r=>jorK(r)===f)||{}).competi||"";return {d:jorD(f),h:`<button class="sumOpt" data-f="${esc(f)}"><span class="soDate">${fmtDate(jorD(f))}</span><span class="soName">${esc(c)}</span></button>`};});
+  const disp=fechas.map(f=>{const c=(RECORDS.find(r=>jorK(r)===f)||ALLNOOF.find(r=>jorK(r)===f)||{}).competi||"";return {d:jorD(f),h:`<button class="sumOpt" data-f="${esc(f)}"><span class="soDate">${fmtDate(jorD(f))}</span><span class="soName">${esc(c)}</span></button>`};});
   CALS.filter(e=>e.f<hoy).forEach(e=>disp.push({d:e.f,h:calRow(e,hoy,false)}));
   disp.sort((a,b)=>a.d<b.d?1:a.d>b.d?-1:0);
   const prox=CALS.filter(e=>e.f>=hoy).sort((a,b)=>(a.d||a.f).localeCompare(b.d||b.f)||a.n.localeCompare(b.n));
