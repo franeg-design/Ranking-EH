@@ -4009,7 +4009,7 @@ function profileStat(name){
       +`<div class="mhTit">MÍNIMAS ${x[0]} CONSEGUIDAS</div>`
       +`<div class="mhList">${x[1].join(" · ")}</div></div></div>`).join("");
 }
-let phraseWritten=false,cmpA=null,cmpB=null,chipScrollPos=0,chipAnim=false,CHIP_T=0,finaSel="3",finaChipPos=0,finaChipAnim=false;
+let phraseWritten=false,cmpA=null,cmpB=null,chipScrollPos=0,chipAnim=false,CHIP_T=0,CHIP_W=0,CHIP_DEDO=false,CHIP_COP=9,finaSel="3",finaChipPos=0,finaChipAnim=false;
 function whenAwake(fn){
   try{
     const ctx=actx();if(!ctx)return;
@@ -4854,7 +4854,7 @@ function render(){
   const present=(view==="marcas"||view==="minimas")?ordPruebas([...pruebasPresent(),...noofPresent()]):pruebasPresent();
   if(present.length&&!present.includes(activePrueba))activePrueba=present[0];
   const chips1=present.map(p=>`<button class="chip ${stKlass(p)}${esNoof(p)?" noof":""} ${p===activePrueba?"on":""}" data-p="${esc(p)}">${esc(p)}</button>`).join("");
-  const chips=chips1+chips1+chips1;
+  const chips=chips1.repeat(CHIP_COP);
   const NO=esNoof(activePrueba);
   const rk=NO?noofRank(poolRecs(noofScope()),activePrueba):rankTime(RECORDS,activePrueba);
   const prev=NO?{}:rankMap(rankTime(BEFORE,activePrueba));
@@ -4933,17 +4933,31 @@ function render(){
     const n=present.length;
     const kids=ce.children||[];
     const period=(n>0&&kids.length>=2*n&&kids[n]&&kids[n].offsetLeft!==undefined)?(kids[n].offsetLeft-kids[0].offsetLeft):0;
-    const norm=x=>{if(!period)return x;while(x<period*0.5)x+=period;while(x>period*1.5)x-=period;return x;};
+    /* LA FILA INFINITA YA NO SALTA MIENTRAS SE DESLIZA (Fran, 24-nov-2026, iPhone; DIARIO §13). El salto
+       de vuelta (±1 periodo) se hacía en cada `scroll`, también en plena inercia del dedo: en el iPhone
+       la inercia la lleva el sistema y, al cambiarle `scrollLeft` por debajo, la fila se quedaba en
+       blanco. Ahora hay nueve copias en vez de tres (cuatro de margen a cada lado, ~9.000 px) y el salto se hace solo
+       con la fila QUIETA: sin dedo encima y 160 ms sin moverse. Como las copias son idénticas, no se ve. */
+    const mid=Math.floor(CHIP_COP/2);
+    const norm=x=>{if(!period)return x;while(x<period*(mid-0.5))x+=period;while(x>period*(mid+0.5))x-=period;return x;};
     if(ce!==oldCe)ce.scrollLeft=norm(chipScrollPos);
-    ce.onscroll=()=>{
-      chipScrollPos=ce.scrollLeft;
-      if(!chipAnim&&period){const x=ce.scrollLeft;if(x<period*0.3)ce.scrollLeft=x+period;else if(x>period*1.7)ce.scrollLeft=x-period;}
-    };
+    const recolocar=()=>{CHIP_W=0;if(chipAnim||CHIP_DEDO||!period||!ce.isConnected)return;
+      const x=ce.scrollLeft,y=norm(x);if(Math.abs(y-x)>1){ce.scrollLeft=y;}chipScrollPos=ce.scrollLeft;};
+    const esperar=()=>{clearTimeout(CHIP_W);CHIP_W=setTimeout(recolocar,160);};
+    ce.onscroll=()=>{chipScrollPos=ce.scrollLeft;esperar();};
+    ce._esperar=esperar;ce._per=period;ce._norm=norm;
+    if(ce!==oldCe){CHIP_DEDO=false;   /* pasivos: no frenan el desplazamiento; uno por fila, no uno por repintado */
+      /* Si a base de deslizar sin parar se acerca a un extremo, se recoloca al posar el dedo (la
+         inercia ya se ha parado) y solo entonces: es raro y evita que la fila se quede sin recorrido. */
+      ce.addEventListener("touchstart",()=>{CHIP_DEDO=true;clearTimeout(CHIP_W);
+        const p=ce._per||0,x=ce.scrollLeft,mx=ce.scrollWidth-ce.clientWidth;
+        if(p&&!chipAnim&&(x<p*1.5||x>mx-p*1.5)&&ce._norm){ce.scrollLeft=ce._norm(x);chipScrollPos=ce.scrollLeft;}},{passive:true});
+      ["touchend","touchcancel"].forEach(t=>ce.addEventListener(t,()=>{CHIP_DEDO=false;if(ce._esperar)ce._esperar();},{passive:true}));}
     const idx=present.indexOf(activePrueba);
     if(idx>=0&&period){
       const centerNow=ce.scrollLeft+ce.clientWidth/2;
       let bestT=null,bestD=Infinity;
-      [idx,idx+n,idx+2*n].forEach(k=>{const el2=kids[k];if(!el2)return;const t=el2.offsetLeft-(ce.clientWidth-el2.clientWidth)/2;const d=Math.abs((el2.offsetLeft+el2.clientWidth/2)-centerNow);if(d<bestD){bestD=d;bestT=t;}});
+      Array.from({length:CHIP_COP},(_,j)=>idx+j*n).forEach(k=>{const el2=kids[k];if(!el2)return;const t=el2.offsetLeft-(ce.clientWidth-el2.clientWidth)/2;const d=Math.abs((el2.offsetLeft+el2.clientWidth/2)-centerNow);if(d<bestD){bestD=d;bestT=t;}});
       if(bestT!==null){
         chipAnim=true;
         const smooth=(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches)?"auto":"smooth";
