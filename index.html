@@ -376,6 +376,13 @@ select.seasonSel{appearance:none;-webkit-appearance:none;padding:5px 24px 5px 12
 .phrase .phSign{position:absolute;right:20px;bottom:-20px;font-size:12.5px;line-height:1;font-weight:700;color:#0d2f47;opacity:.88;text-align:center;white-space:nowrap}
 .phrase.write .phTxt span,.phrase.write .phSign span{opacity:0;animation:phCh ease-out forwards}
 @keyframes phCh{from{opacity:0}to{opacity:1}}
+/* AVISO DE DATOS NUEVOS (Fran, 24-nov-2026, variante B; DIARIO §12). Franja oscura abajo con botón
+   dorado. Mientras está, se oculta el ⓘ y el botón flotante de volver sube por encima de ella. */
+.updBar{position:fixed;left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom));max-width:516px;margin:0 auto;z-index:58;display:none;align-items:center;gap:10px;background:var(--brand-deep);color:#fff;border-radius:16px;padding:12px 12px 12px 16px;box-shadow:0 8px 24px rgba(11,42,58,.35);font:600 13px 'Inter',system-ui,sans-serif;cursor:pointer}
+.updBar span{flex:1}.updBar small{display:block;font:400 11px 'Inter',system-ui,sans-serif;opacity:.8;margin-top:2px}
+.updBar b{background:var(--gold);color:var(--ink);border-radius:999px;padding:8px 14px;font:700 12px 'Inter',system-ui,sans-serif}
+body.updOn .updBar{display:flex}body.updOn .infoFab{display:none}
+body.updOn .backFloat{bottom:calc(92px + env(safe-area-inset-bottom))}
 .infoFab{position:fixed;right:14px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:55;width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.62);background:linear-gradient(160deg,rgba(255,255,255,.44),rgba(255,255,255,.22));-webkit-backdrop-filter:blur(10px) saturate(170%);backdrop-filter:blur(10px) saturate(170%);box-shadow:0 4px 16px rgba(11,42,58,.22),inset 0 1px 0 rgba(255,255,255,.65);color:var(--brand-deep);font-size:25px;line-height:1;padding:0;cursor:pointer}
 .infoFab:active{transform:scale(.93)}
 .legPop{position:fixed;inset:0;background:rgba(10,30,44,.5);display:flex;align-items:center;justify-content:center;padding:22px;z-index:60;animation:vfade .18s ease-out}
@@ -5267,7 +5274,7 @@ function renderProfile(vw){
   animateBars(vw);
 }
 
-async function boot(){const pIns=fetch("inscritos.csv",{cache:"no-store"}).then(r=>r&&r.ok?r.text():"").catch(()=>"");const pCla=fetch("clasificaciones.csv",{cache:"no-store"}).then(r=>r&&r.ok?r.text():"").catch(()=>"");let txt=null;try{const res=await fetch("data.csv",{cache:"no-store"});if(res.ok){const t=await res.text();if(parseCSV(t).length)txt=t;}}catch(e){}if(txt===null)txt=SAMPLE_CSV;
+async function boot(){const pIns=fetch("inscritos.csv",{cache:"no-store"}).then(r=>r&&r.ok?r.text():"").catch(()=>"");const pCla=fetch("clasificaciones.csv",{cache:"no-store"}).then(r=>r&&r.ok?r.text():"").catch(()=>"");let txt=null;try{const res=await fetch("data.csv",{cache:"no-store"});if(res.ok){const t=await res.text();if(parseCSV(t).length){txt=t;DATA_HUELLA=huellaTxt(t);}}}catch(e){}if(txt===null)txt=SAMPLE_CSV;
   INSCRITOS=parseIns(await pIns);
   ALLRECS=parseCSV(txt);_B50=null;_TPL=null;_T1=null;_PREVB=null;_PMMP=null;_ANIO=null;
   applySex();
@@ -5528,6 +5535,26 @@ try{
   window.addEventListener("pointerdown",()=>{actx();},{passive:true});
   document.addEventListener("visibilitychange",()=>{if(!document.hidden&&AC_CTX)actx();});
   window.addEventListener("focus",()=>{if(AC_CTX)actx();});
+}catch(e){}
+/* AVISO DE DATOS NUEVOS (Fran, 24-nov-2026; DIARIO §12). En el iPhone, abierta desde el icono de la
+   pantalla de inicio, la app no tiene botón de recargar y el sistema la «despierta» sin arrancarla de nuevo:
+   seguía con el data.csv del primer arranque. Al volver a la app (como mucho una vez cada 2 min) se pide
+   data.csv otra vez y, si su huella no es la del arranque, sale la franja «Hay resultados nuevos»; al
+   tocarla se recarga. No recarga sola para no sacar a nadie de la pantalla en la que está. */
+var DATA_HUELLA=null,UPD_ULT=Date.now();
+function huellaTxt(t){let h=2166136261;for(let i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619);}return t.length+":"+(h>>>0);}
+function mirarDatosNuevos(){
+  if(DATA_HUELLA===null||document.body.classList.contains("updOn"))return;
+  const ahora=Date.now();if(ahora-UPD_ULT<120000)return;UPD_ULT=ahora;
+  fetch("data.csv",{cache:"no-store"}).then(r=>r&&r.ok?r.text():null).then(t=>{
+    if(t&&parseCSV(t).length&&huellaTxt(t)!==DATA_HUELLA)document.body.classList.add("updOn");}).catch(()=>{});
+}
+try{
+  const u=document.createElement("div");u.className="updBar";u.setAttribute("role","button");
+  u.innerHTML='<span>Hay resultados nuevos<small>Toca para cargarlos</small></span><b>Actualizar</b>';
+  u.addEventListener("click",()=>location.reload());document.body.appendChild(u);
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)mirarDatosNuevos();});
+  window.addEventListener("pageshow",e=>{if(e.persisted)mirarDatosNuevos();});
 }catch(e){}
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}
 </script>
