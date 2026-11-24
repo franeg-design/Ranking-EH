@@ -5576,7 +5576,7 @@ function avisoUpd(tipo){
 function mirarDatosNuevos(){
   if(UPD_TIPO==="app")return;
   const ahora=Date.now();if(ahora-UPD_ULT<120000)return;UPD_ULT=ahora;
-  if(APP_HUELLA!==null)pedirTxt(urlApp()).then(t=>{
+  if(APP_HUELLA!==null&&typeof location!=="undefined")pedirTxt(urlApp()).then(t=>{
     if(t&&/<html/i.test(t)&&huellaTxt(t)!==APP_HUELLA)avisoUpd("app");});
   if(DATA_HUELLA!==null&&UPD_TIPO===null)pedirTxt("data.csv").then(t=>{
     if(t&&parseCSV(t).length&&huellaTxt(t)!==DATA_HUELLA)avisoUpd("datos");});
@@ -5586,7 +5586,7 @@ try{
   u.addEventListener("click",()=>location.reload());document.body.appendChild(u);
   document.addEventListener("visibilitychange",()=>{if(!document.hidden)mirarDatosNuevos();});
   window.addEventListener("pageshow",e=>{if(e.persisted)mirarDatosNuevos();});
-  setTimeout(()=>pedirTxt(urlApp()).then(t=>{if(t&&/<html/i.test(t))APP_HUELLA=huellaTxt(t);}),5000);
+  setTimeout(()=>{try{pedirTxt(urlApp()).then(t=>{if(t&&/<html/i.test(t))APP_HUELLA=huellaTxt(t);});}catch(e){}},5000);
 }catch(e){}
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}
 </script>
