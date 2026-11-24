@@ -5559,21 +5559,34 @@ try{
    pantalla de inicio, la app no tiene botón de recargar y el sistema la «despierta» sin arrancarla de nuevo:
    seguía con el data.csv del primer arranque. Al volver a la app (como mucho una vez cada 2 min) se pide
    data.csv otra vez y, si su huella no es la del arranque, sale la franja «Hay resultados nuevos»; al
-   tocarla se recarga. No recarga sola para no sacar a nadie de la pantalla en la que está. */
-var DATA_HUELLA=null,UPD_ULT=Date.now();
+   tocarla se recarga. No recarga sola para no sacar a nadie de la pantalla en la que está.
+   VERSIÓN NUEVA DE LA APP (Fran, 24-nov-2026; DIARIO §14). Igual con index.html: su huella se toma 5 s
+   después de arrancar (una petición más, sin estorbar la carga) y, si al volver ha cambiado, la franja dice
+   «Nueva versión de la app · Refresca para actualizar». Manda sobre la de datos: al recargar entra todo. */
+var DATA_HUELLA=null,APP_HUELLA=null,UPD_ULT=Date.now(),UPD_TIPO=null;
 function huellaTxt(t){let h=2166136261;for(let i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619);}return t.length+":"+(h>>>0);}
+function urlApp(){return location.href.split("#")[0].split("?")[0];}
+function pedirTxt(u){return fetch(u,{cache:"no-store"}).then(r=>r&&r.ok?r.text():null).catch(()=>null);}
+function avisoUpd(tipo){
+  if(UPD_TIPO==="app")return;UPD_TIPO=tipo;const u=document.querySelector(".updBar");if(!u)return;
+  u.innerHTML=tipo==="app"?'<span>Nueva versión de la app<small>Refresca para actualizar</small></span><b>Refrescar</b>'
+    :'<span>Hay resultados nuevos<small>Toca para cargarlos</small></span><b>Actualizar</b>';
+  document.body.classList.add("updOn");
+}
 function mirarDatosNuevos(){
-  if(DATA_HUELLA===null||document.body.classList.contains("updOn"))return;
+  if(UPD_TIPO==="app")return;
   const ahora=Date.now();if(ahora-UPD_ULT<120000)return;UPD_ULT=ahora;
-  fetch("data.csv",{cache:"no-store"}).then(r=>r&&r.ok?r.text():null).then(t=>{
-    if(t&&parseCSV(t).length&&huellaTxt(t)!==DATA_HUELLA)document.body.classList.add("updOn");}).catch(()=>{});
+  if(APP_HUELLA!==null)pedirTxt(urlApp()).then(t=>{
+    if(t&&/<html/i.test(t)&&huellaTxt(t)!==APP_HUELLA)avisoUpd("app");});
+  if(DATA_HUELLA!==null&&UPD_TIPO===null)pedirTxt("data.csv").then(t=>{
+    if(t&&parseCSV(t).length&&huellaTxt(t)!==DATA_HUELLA)avisoUpd("datos");});
 }
 try{
   const u=document.createElement("div");u.className="updBar";u.setAttribute("role","button");
-  u.innerHTML='<span>Hay resultados nuevos<small>Toca para cargarlos</small></span><b>Actualizar</b>';
   u.addEventListener("click",()=>location.reload());document.body.appendChild(u);
   document.addEventListener("visibilitychange",()=>{if(!document.hidden)mirarDatosNuevos();});
   window.addEventListener("pageshow",e=>{if(e.persisted)mirarDatosNuevos();});
+  setTimeout(()=>pedirTxt(urlApp()).then(t=>{if(t&&/<html/i.test(t))APP_HUELLA=huellaTxt(t);}),5000);
 }catch(e){}
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}
 </script>
