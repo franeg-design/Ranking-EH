@@ -761,6 +761,13 @@ body.updOn .backFloat{bottom:calc(92px + env(safe-area-inset-bottom))}
 body.mfich .head{display:none}
 body.mfich .searchwrap{display:none}
 body.mfich .body{padding-top:calc(10px + env(safe-area-inset-top))}
+/* App instalada en la pantalla de inicio (iPhone, 24-nov-2026, DIARIO §16): iOS difumina la barra de estado
+   y el difuminado baja unos 16 px por debajo de la zona segura, encima de «Natación / Temporada». Solo en modo
+   app se baja la cabecera 16 px más; en el navegador no cambia nada. */
+@media (display-mode: standalone){
+  .head{padding-top:calc(36px + env(safe-area-inset-top))}
+  body.mfich .body{padding-top:calc(26px + env(safe-area-inset-top))}
+}
 /* Título principal de la ficha: escudo + nombre + pastillas; destello en toda la tarjeta al entrar */
 .fTitleCard{margin-bottom:16px;box-shadow:0 6px 20px rgba(11,42,58,.22),0 2px 6px rgba(11,42,58,.14)}
 .fTop{padding:16px 15px 13px}
