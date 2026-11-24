@@ -4009,7 +4009,7 @@ function profileStat(name){
       +`<div class="mhTit">MÍNIMAS ${x[0]} CONSEGUIDAS</div>`
       +`<div class="mhList">${x[1].join(" · ")}</div></div></div>`).join("");
 }
-let phraseWritten=false,cmpA=null,cmpB=null,chipScrollPos=0,chipAnim=false,finaSel="3",finaChipPos=0,finaChipAnim=false;
+let phraseWritten=false,cmpA=null,cmpB=null,chipScrollPos=0,chipAnim=false,CHIP_T=0,finaSel="3",finaChipPos=0,finaChipAnim=false;
 function whenAwake(fn){
   try{
     const ctx=actx();if(!ctx)return;
@@ -4908,15 +4908,33 @@ function render(){
     return `<div class="row" style="border-left-color:${m.rail}"><div class="rkwrap"><div class="rk" style="background:${m.bg};color:${m.ink}">${r.rank}</div>${posTag(r,prev)}</div><div class="mid"><div class="name" data-n="${esc(r.name)}">${esc(r.name)}</div><div class="club">${CLUB_PROV[r.club]?`<span class="ptag">${PROV_AB[CLUB_PROV[r.club]]}</span>`:""}${esc(r.club)} · ${esc(r.anio)}${badges}</div>${sub}</div><div class="right">${right}</div></div>`;
   }).join("");
   const body=rk.length?`<div class="list">${rows}</div>`:`<div class="empty">Sin ${sexFilter==="M"?"nadadores":"nadadoras"} para esta selección.</div>`;
-  vw.innerHTML=`<div class="chipwrap"><div class="chips">${chips}</div></div>${view==="minimas"?minRefCard(activePrueba):""}${body}`;
+  /* PASTILLAS QUE DESAPARECÍAN (Fran, 24-nov-2026, iPhone; DIARIO §13). Al tocar pruebas seguidas,
+     cada toque tiraba la fila y montaba otra nueva en mitad del deslizamiento suave, y el temporizador
+     del toque anterior (450 ms) seguía vivo: apagaba `chipAnim` a mitad del deslizamiento del nuevo
+     —con lo que el salto de vuelta de la fila infinita se peleaba con el deslizamiento— y guardaba
+     el `scrollLeft` de la fila vieja, ya fuera de la página (0). En el iPhone eso se veía en blanco.
+     Ahora: si las pastillas son las mismas, se conserva la fila viva (solo cambia cuál está
+     encendida y no se toca su desplazamiento) y hay un único temporizador, que solo actúa sobre la
+     fila que está en pantalla. */
+  const chipKey=present.join("|"),resto=`${view==="minimas"?minRefCard(activePrueba):""}${body}`;
+  let oldCe=vw.querySelector(".chips");
+  if(!(oldCe&&oldCe._pk===chipKey&&oldCe.parentNode&&oldCe.parentNode.parentNode===vw))oldCe=null;
+  if(oldCe){   /* la fila no sale nunca de la página: sacarla y volverla a meter perdería su desplazamiento */
+    const wrap=oldCe.parentNode;
+    while(wrap.previousSibling)vw.removeChild(wrap.previousSibling);
+    while(wrap.nextSibling)vw.removeChild(wrap.nextSibling);
+    vw.insertAdjacentHTML("beforeend",resto);
+    oldCe.querySelectorAll(".chip").forEach(c=>c.classList.toggle("on",c.dataset.p===activePrueba));
+  }else vw.innerHTML=`<div class="chipwrap"><div class="chips">${chips}</div></div>${resto}`;
   animateTags(vw);
   const ce=vw.querySelector(".chips");
   if(ce){
+    ce._pk=chipKey;
     const n=present.length;
     const kids=ce.children||[];
     const period=(n>0&&kids.length>=2*n&&kids[n]&&kids[n].offsetLeft!==undefined)?(kids[n].offsetLeft-kids[0].offsetLeft):0;
     const norm=x=>{if(!period)return x;while(x<period*0.5)x+=period;while(x>period*1.5)x-=period;return x;};
-    ce.scrollLeft=norm(chipScrollPos);
+    if(ce!==oldCe)ce.scrollLeft=norm(chipScrollPos);
     ce.onscroll=()=>{
       chipScrollPos=ce.scrollLeft;
       if(!chipAnim&&period){const x=ce.scrollLeft;if(x<period*0.3)ce.scrollLeft=x+period;else if(x>period*1.7)ce.scrollLeft=x-period;}
@@ -4930,7 +4948,8 @@ function render(){
         chipAnim=true;
         const smooth=(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches)?"auto":"smooth";
         try{ce.scrollTo({left:bestT,behavior:smooth});}catch(e){ce.scrollLeft=bestT;}
-        setTimeout(()=>{chipAnim=false;ce.scrollLeft=norm(ce.scrollLeft);chipScrollPos=ce.scrollLeft;},450);
+        clearTimeout(CHIP_T);
+        CHIP_T=setTimeout(()=>{CHIP_T=0;chipAnim=false;if(!ce.isConnected)return;ce.scrollLeft=norm(ce.scrollLeft);chipScrollPos=ce.scrollLeft;},450);
       }
     }
   }
