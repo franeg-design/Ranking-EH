@@ -10,6 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="Ranking EH" />
 <link rel="manifest" href="./manifest.json" />
+<script>try{if(navigator.standalone===true||matchMedia("(display-mode: standalone)").matches||matchMedia("(display-mode: fullscreen)").matches)document.documentElement.classList.add("pwa");}catch(e){}</script>
 <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
 <link rel="icon" type="image/png" href="./icon-192.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -762,12 +763,13 @@ body.mfich .head{display:none}
 body.mfich .searchwrap{display:none}
 body.mfich .body{padding-top:calc(10px + env(safe-area-inset-top))}
 /* App instalada en la pantalla de inicio (iPhone, 24-nov-2026, DIARIO §16): iOS difumina la barra de estado
-   y el difuminado baja unos 16 px por debajo de la zona segura, encima de «Natación / Temporada». Solo en modo
-   app se baja la cabecera 16 px más; en el navegador no cambia nada. */
-@media (display-mode: standalone){
-  .head{padding-top:calc(36px + env(safe-area-inset-top))}
-  body.mfich .body{padding-top:calc(26px + env(safe-area-inset-top))}
-}
+   y el difuminado baja por debajo de la zona segura, encima de «Natación / Temporada». Solo en modo app se baja
+   la cabecera 20 px más; en el navegador no cambia nada.
+   ⚠️ Va por la clase `pwa` en <html> (script de <head>), NO por `@media (display-mode: standalone)`: sin
+   manifest.json, iOS abre la app en pantalla completa por `apple-mobile-web-app-capable` pero esa media query
+   no casa (primer intento, efd6805, no hizo nada en el iPhone de Fran). `navigator.standalone` sí. */
+html.pwa .head{padding-top:calc(40px + env(safe-area-inset-top))}
+html.pwa body.mfich .body{padding-top:calc(30px + env(safe-area-inset-top))}
 /* Título principal de la ficha: escudo + nombre + pastillas; destello en toda la tarjeta al entrar */
 .fTitleCard{margin-bottom:16px;box-shadow:0 6px 20px rgba(11,42,58,.22),0 2px 6px rgba(11,42,58,.14)}
 .fTop{padding:16px 15px 13px}
