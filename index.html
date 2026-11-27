@@ -776,6 +776,13 @@ html.pwa body.mfich .body{padding-top:calc(30px + env(safe-area-inset-top))}
 .fTop::after{content:"";position:absolute;top:0;left:-60%;width:42%;height:100%;pointer-events:none;background:linear-gradient(100deg,transparent,rgba(255,255,255,.30),transparent);transform:skewX(-18deg);animation:cardSheen 1.15s ease-out .18s 1 both}
 @keyframes cardSheen{from{left:-60%}to{left:135%}}
 .fHead{padding-right:0}
+/* MIS NADADORES (Fran, 27-nov-2026, DIARIO §24, variante A2). Estrella en la ficha; en las listas, fondo dorado
+   claro y ★ delante del nombre. Sin borde propio: la franja de medalla de la izquierda sigue igual. */
+.stBtn{flex:none;margin-left:auto;align-self:flex-start;width:44px;height:44px;border-radius:999px;border:1.5px solid rgba(255,255,255,.45);background:rgba(255,255,255,.12);color:#fff;font-size:23px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;font-family:inherit;-webkit-tap-highlight-color:transparent}
+.stBtn.on{color:var(--gold);border-color:var(--gold);background:#fff8e6}
+.stI{color:#d39a1c;font-size:.85em;margin-right:4px}
+.row.mio,.rB.mio,.insNad.mio{background:#fff8e6}
+.rB.mio,.insNad.mio{border-radius:6px}
 .fName{font-size:23px}
 .fPills{display:flex;flex-wrap:wrap;gap:7px;margin-top:13px}
 .fPills button{position:static;top:auto;right:auto;background:rgba(255,255,255,.17);border:1px solid rgba(255,255,255,.34);color:#fff;border-radius:999px;padding:6px 13px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
@@ -3514,7 +3521,7 @@ function renderFichSummary(box){
      (todo eso sale de ALLRECS): sin esos botones, que abrirían pantallas vacías. */
   const pills=soloNoof(name)?`<div class="fPills"><span class="soloNoofNote">Solo marcas en pruebas no oficiales</span></div>`
     :`<div class="fPills"><button class="cmpBtn" data-n="${esc(name)}">Comparar</button><button class="badgeBtn" data-n="${esc(name)}">🏅 Insignias</button><button class="compBtn" data-n="${esc(name)}">Competiciones</button></div>`;
-  box.innerHTML=`<div class="profile fTitleCard"><div class="pTop fTop"><div class="pHead fHead">${logoImg(rec0.club)}<div class="fNameWrap"><div class="pName fName">${esc(name)}</div><div class="pClub">${esc(rec0.club||"")} · ${esc(rec0.anio||"")}</div></div></div>${pills}</div></div>`+insFicha(name);
+  box.innerHTML=`<div class="profile fTitleCard"><div class="pTop fTop"><div class="pHead fHead">${logoImg(rec0.club)}<div class="fNameWrap"><div class="pName fName">${esc(name)}</div><div class="pClub">${esc(rec0.club||"")} · ${esc(rec0.anio||"")}</div></div>${soloNoof(name)?"":`<button class="stBtn${MIOS.has(name)?" on":""}" data-n="${esc(name)}" aria-label="Marcar nadador">${MIOS.has(name)?"★":"☆"}</button>`}</div>${pills}</div></div>`+insFicha(name);
 }
 /* ===== PRÓXIMAS COMPETICIONES EN LA BANDA (2-nov-2026, DIARIO §4.72) ==========================
    ⚠️ «Hoy» sale de hoyISO() y de NADIE MÁS: el arnés fija window.__HOY para que el volcado no
@@ -3649,7 +3656,7 @@ function resPanel(CL,comp,FD,latest,pb,TBS){
           else if(cs<prev.cs)ex+=`<span class="rsMej">⭐ −${fmtClock(prev.cs-cs)}</span>`;
           minNuevas(rec,FD,TBS).forEach(t=>{ex+=`<span class="mb ${t==="ESP"?"mbESP":"mbEH"}">${t}</span>`;});}}
       const link=ala&&fichas.has(r.nadadora);
-      h+=`<div class="rB${ala?"":" ext"}"><span class="ps">${r.dsq?"—":esc(r.pos)}</span><span class="nm2${link?" rsN":""}"${link?` data-n="${esc(r.nadadora)}"`:""}>${esc(shortName(r.nadadora))}</span><span class="an">${esc(String(r.anio).slice(2))}</span><span class="cl">${esc(clubCorto(r.club))}</span><span class="tm mono">${r.dsq?'<span class="dsq">DSQ</span>':esc(r.tiempo)}</span>${ex?`<span class="ex">${ex}</span>`:""}</div>`;});
+      h+=`<div class="rB${ala?"":" ext"}${mioCls(r.nadadora)}"><span class="ps">${r.dsq?"—":esc(r.pos)}</span><span class="nm2${link?" rsN":""}"${link?` data-n="${esc(r.nadadora)}"`:""}>${mioSt(r.nadadora)}${esc(shortName(r.nadadora))}</span><span class="an">${esc(String(r.anio).slice(2))}</span><span class="cl">${esc(clubCorto(r.club))}</span><span class="tm mono">${r.dsq?'<span class="dsq">DSQ</span>':esc(r.tiempo)}</span>${ex?`<span class="ex">${ex}</span>`:""}</div>`;});
     h+=`</div>`;});
   h+=`<div class="sumNote">Clasificación del acta oficial. En gris, ${sexFilter==="M"?"nadadores":"nadadoras"} de clubes de fuera de Álava. Toca un nombre para ver su ficha.${esCtoEsp(comp)||/^cto (eh|euskal)/i.test(comp)?" Solo las clasificaciones en las que nada alguien de Álava.":""}</div>`;
   return h;}
@@ -3707,7 +3714,7 @@ function insBloque(e,sx){
         +S.map(r=>insNad(r,!enCat(r))).join("");});});
   return h+`<div class="insNota">Todas las pruebas y series de chicas y chicos, en el orden del programa; en gris, quien no es del sexo o la categoría elegidos. ~ = hora estimada de la serie; es orientativa, conviene estar con margen.</div></div>`;}
 /* Un renglón de serie: calle, nombre, año y club. `otra` = de otra edad (gris); `yo` = la de la ficha. */
-function insNad(r,otra,yo){return `<div class="insNad${otra?" otra":""}${yo?" yo":""}"><span class="insCa">Calle ${r.calle}</span><span class="insNm">${esc(shortName(r.nadadora))} <span class="insAn">${esc(String(r.anio).slice(-2))}</span></span><span class="insClub">${esc(String(r.club).replace(/^C[NI] /,""))}</span></div>`;}
+function insNad(r,otra,yo){return `<div class="insNad${otra?" otra":""}${yo?" yo":""}${yo?"":mioCls(r.nadadora)}"><span class="insCa">Calle ${r.calle}</span><span class="insNm">${yo?"":mioSt(r.nadadora)}${esc(shortName(r.nadadora))} <span class="insAn">${esc(String(r.anio).slice(-2))}</span></span><span class="insClub">${esc(String(r.club).replace(/^C[NI] /,""))}</span></div>`;}
 /* Ficha: arriba de las pestañas, solo si esa persona está en la lista de una próxima. */
 function insFicha(name){const hoy=hoyISO();let h="";
   insVivas().forEach(e=>{const L=insDe(e).filter(r=>r.nadadora===name);if(!L.length)return;
@@ -4437,6 +4444,11 @@ function scrollSec(){
     window.scrollTo({top:Math.max(0,y),behavior:"smooth"});
   }catch(e){try{window.scrollTo(0,0);}catch(e2){}}
 }
+/* MIS NADADORES (DIARIO §24): se guardan solo en este móvil (localStorage), sin cuenta. */
+const MIOS_K="rehMios";const MIOS=(()=>{try{const a=JSON.parse(localStorage.getItem(MIOS_K)||"[]");return new Set(Array.isArray(a)?a:[]);}catch(e){return new Set();}})();
+function mioCls(n){return MIOS.has(n)?" mio":"";}
+function mioSt(n){return MIOS.has(n)?'<span class="stI">★</span>':"";}
+function toggleMio(n){if(MIOS.has(n))MIOS.delete(n);else MIOS.add(n);try{localStorage.setItem(MIOS_K,JSON.stringify([...MIOS]));}catch(e){}return MIOS.has(n);}
 function goProfile(n){if(!n)return;mode="fichas";query=n;badgesFor=null;cmpA=null;cmpB=null;compsFor=null;compFecha=null;const s=el("search");if(s){s.value=n;}const sg=el("searchSug");if(sg){sg.style.display="none";sg.innerHTML="";}render();scrollSec();}
 function deltaTag(ev,pop,corto){if(!ev)return"";
   const c=ev.dir==="up"?"up":"down",sg=ev.dir==="up"?"−":"+";
@@ -4945,9 +4957,9 @@ function render(){
   const prev=NO?{}:rankMap(rankTime(BEFORE,activePrueba));
   const rows=rk.map(r=>{
     if(NO){const m=medal(r.rank);const dstr=`<span class="tdate">${fmtDate(r.fecha)}</span>`;
-      const nm=`<div class="name" data-n="${esc(r.name)}">${esc(r.name)}</div>`;
+      const nm=`<div class="name" data-n="${esc(r.name)}">${mioSt(r.name)}${esc(r.name)}</div>`;
       const minV=view==="minimas";
-      return `<div class="row" style="border-left-color:${m.rail}"><div class="rkwrap"><div class="rk" style="background:${m.bg};color:${m.ink}">${r.rank}</div></div><div class="mid">${nm}<div class="club">${CLUB_PROV[r.club]?`<span class="ptag">${PROV_AB[CLUB_PROV[r.club]]}</span>`:""}${esc(r.club)} · ${esc(r.anio)}</div>${minV?noofMinLines(r):""}</div><div class="right"><div class="time mono">${dstr}${esc(r.tiempo)}</div>${minV?"":`<div>${noofBadge(r)}</div>`}</div></div>`;}
+      return `<div class="row${mioCls(r.name)}" style="border-left-color:${m.rail}"><div class="rkwrap"><div class="rk" style="background:${m.bg};color:${m.ink}">${r.rank}</div></div><div class="mid">${nm}<div class="club">${CLUB_PROV[r.club]?`<span class="ptag">${PROV_AB[CLUB_PROV[r.club]]}</span>`:""}${esc(r.club)} · ${esc(r.anio)}</div>${minV?noofMinLines(r):""}</div><div class="right"><div class="time mono">${dstr}${esc(r.tiempo)}</div>${minV?"":`<div>${noofBadge(r)}</div>`}</div></div>`;}
     const m=medal(r.rank);
     let right,badges="",sub="";
     if(view==="marcas"){
@@ -4990,7 +5002,7 @@ function render(){
       }
       right=`<div class="time mono">${preT}${esc(r.tiempo)}</div><div>${gapTag(r,PAR_EH,"EH")}</div><div>${gapTag(r,PAR_ESP,"ESP")}</div>`;
     }
-    return `<div class="row" style="border-left-color:${m.rail}"><div class="rkwrap"><div class="rk" style="background:${m.bg};color:${m.ink}">${r.rank}</div>${posTag(r,prev)}</div><div class="mid"><div class="name" data-n="${esc(r.name)}">${esc(r.name)}</div><div class="club">${CLUB_PROV[r.club]?`<span class="ptag">${PROV_AB[CLUB_PROV[r.club]]}</span>`:""}${esc(r.club)} · ${esc(r.anio)}${badges}</div>${sub}</div><div class="right">${right}</div></div>`;
+    return `<div class="row${mioCls(r.name)}" style="border-left-color:${m.rail}"><div class="rkwrap"><div class="rk" style="background:${m.bg};color:${m.ink}">${r.rank}</div>${posTag(r,prev)}</div><div class="mid"><div class="name" data-n="${esc(r.name)}">${mioSt(r.name)}${esc(r.name)}</div><div class="club">${CLUB_PROV[r.club]?`<span class="ptag">${PROV_AB[CLUB_PROV[r.club]]}</span>`:""}${esc(r.club)} · ${esc(r.anio)}${badges}</div>${sub}</div><div class="right">${right}</div></div>`;
   }).join("");
   const body=rk.length?`<div class="list">${rows}</div>`:`<div class="empty">Sin ${sexFilter==="M"?"nadadores":"nadadoras"} para esta selección.</div>`;
   /* PASTILLAS QUE DESAPARECÍAN (Fran, 24-nov-2026, iPhone; DIARIO §13). Al tocar pruebas seguidas,
@@ -5117,7 +5129,7 @@ function renderClass(vw,N){
     if(!yearAll()||clubFilter!=="all"||provFilter!=="all"){t=t.map(a=>Object.assign({},a));let rk=0,pg=null,ps=null,pb2=null;t.forEach((a,i)=>{if(a.g!==pg||a.s!==ps||a.b!==pb2){rk=i+1;pg=a.g;ps=a.s;pb2=a.b;}a.rank=rk;});}
     body=!t.length?`<div class="empty">Aún no hay insignias${isHist()?"":" esta temporada"}${!yearAll()?" con este filtro":""}.</div>`:
       `<div class="list">`+t.map(a=>{const m=medal(a.rank);
-        return `<div class="row medrow" style="border-left-color:${m.rail}"><div class="rkwrap"><div class="rk" style="background:${m.bg};color:${m.ink}">${a.rank}</div></div><div class="mid"><div class="name" data-n="${esc(a.name)}">${esc(a.name)}</div><div class="club">${CLUB_PROV[a.club]?`<span class="ptag">${PROV_AB[CLUB_PROV[a.club]]}</span>`:""}${esc(a.club)} · ${esc(a.anio)}</div><div class="medcats">${[["Mejor del día","mejor"],["Marcas","marcas"],["Progresión","prog"],["Forma 🔥","forma"]].map(cc=>{const c=a.cats[cc[1]];if(!(c[0]+c[1]+c[2]))return "";return `<span class="mcn">${cc[0]}</span><span class="mcv">${c[0]?`<b><span class="me">🥇</span>${c[0]}</b>`:""}${c[1]?`<b><span class="me">🥈</span>${c[1]}</b>`:""}${c[2]?`<b><span class="me">🥉</span>${c[2]}</b>`:""}</span>`;}).join("")}</div></div><div class="right"><div class="medline">${a.g?`<span class="mdc"><span class="me">🥇</span>${a.g}</span>`:""}${a.s?`<span class="mdc"><span class="me">🥈</span>${a.s}</span>`:""}${a.b?`<span class="mdc"><span class="me">🥉</span>${a.b}</span>`:""}</div><div class="medtot">${a.total} insignia${a.total===1?"":"s"}</div></div></div>`;
+        return `<div class="row medrow${mioCls(a.name)}" style="border-left-color:${m.rail}"><div class="rkwrap"><div class="rk" style="background:${m.bg};color:${m.ink}">${a.rank}</div></div><div class="mid"><div class="name" data-n="${esc(a.name)}">${mioSt(a.name)}${esc(a.name)}</div><div class="club">${CLUB_PROV[a.club]?`<span class="ptag">${PROV_AB[CLUB_PROV[a.club]]}</span>`:""}${esc(a.club)} · ${esc(a.anio)}</div><div class="medcats">${[["Mejor del día","mejor"],["Marcas","marcas"],["Progresión","prog"],["Forma 🔥","forma"]].map(cc=>{const c=a.cats[cc[1]];if(!(c[0]+c[1]+c[2]))return "";return `<span class="mcn">${cc[0]}</span><span class="mcv">${c[0]?`<b><span class="me">🥇</span>${c[0]}</b>`:""}${c[1]?`<b><span class="me">🥈</span>${c[1]}</b>`:""}${c[2]?`<b><span class="me">🥉</span>${c[2]}</b>`:""}</span>`;}).join("")}</div></div><div class="right"><div class="medline">${a.g?`<span class="mdc"><span class="me">🥇</span>${a.g}</span>`:""}${a.s?`<span class="mdc"><span class="me">🥈</span>${a.s}</span>`:""}${a.b?`<span class="mdc"><span class="me">🥉</span>${a.b}</span>`:""}</div><div class="medtot">${a.total} insignia${a.total===1?"":"s"}</div></div></div>`;
       }).join("")+`</div>`;
   }
   else if(!cur.length){
@@ -5126,7 +5138,7 @@ function renderClass(vw,N){
     const rows=cur.map(r=>{const m=medal(r.rank);
       const abKl={L:"st-l",E:"st-e",B:"st-b",M:"st-m",Est:"st-x"};
       const chips=`<div class="pchips">${r.pruebas.map(p=>`<span class="pc ${abKl[p.split(" ")[1]]||"st-x"}">${esc(p)}</span>`).join("")}</div>`;
-      return `<div class="row" style="border-left-color:${m.rail}"><div class="rkwrap"><div class="rk" style="background:${m.bg};color:${m.ink}">${r.rank}</div>${posTag(r,prev)}</div><div class="mid"><div class="name" data-n="${esc(r.name)}">${esc(r.name)}</div><div class="club">${CLUB_PROV[r.club]?`<span class="ptag">${PROV_AB[CLUB_PROV[r.club]]}</span>`:""}${esc(r.club)} · ${esc(r.anio)}</div>${chips}</div><div class="right"><div class="big">${r.sum}<span class="pts">pts</span></div></div></div>`;
+      return `<div class="row${mioCls(r.name)}" style="border-left-color:${m.rail}"><div class="rkwrap"><div class="rk" style="background:${m.bg};color:${m.ink}">${r.rank}</div>${posTag(r,prev)}</div><div class="mid"><div class="name" data-n="${esc(r.name)}">${mioSt(r.name)}${esc(r.name)}</div><div class="club">${CLUB_PROV[r.club]?`<span class="ptag">${PROV_AB[CLUB_PROV[r.club]]}</span>`:""}${esc(r.club)} · ${esc(r.anio)}</div>${chips}</div><div class="right"><div class="big">${r.sum}<span class="pts">pts</span></div></div></div>`;
     }).join("");
     body=`<div class="list">${rows}</div>`;
   }
@@ -5463,6 +5475,7 @@ el("backFloat").addEventListener("click",()=>{if(compFecha){compFecha=null;rende
 el("infoFab").addEventListener("click",()=>{const pop=el("legPop"),bd=el("legPopBody");if(pop&&bd){bd.innerHTML=(sumShown?(String(sumFecha||"").indexOf("CAL|")===0?calLeg():sumLeg()):"")+(LEG_HTML||"");pop.style.display="flex";}});
 el("summary").addEventListener("click",e=>{
   const t=e.target&&e.target.closest?e.target.closest:null;if(!t)return;
+  const sb=e.target.closest(".stBtn");if(sb){const on=toggleMio(sb.dataset.n);sb.classList.toggle("on",on);sb.textContent=on?"★":"☆";return;}
   const bb=e.target.closest(".badgeBtn");if(bb){badgesFor=bb.dataset.n;cmpA=null;cmpB=null;compsFor=null;compFecha=null;render();scrollSec();return;}
   const cb=e.target.closest(".cmpBtn");if(cb){cmpA=cb.dataset.n;cmpB=null;badgesFor=null;compsFor=null;compFecha=null;render();scrollSec();return;}
   const itg=e.target.closest(".insTg");if(itg){const k=itg.dataset.ik;const on=!INS_OPEN.has(k);on?INS_OPEN.add(k):INS_OPEN.delete(k);
