@@ -764,6 +764,9 @@ body.mfich .searchwrap{display:none}
 body.mfich .body{padding-top:calc(10px + env(safe-area-inset-top))}
 /* App instalada (iPhone): la barra de estado es opaca (`status-bar-style` default, 27-nov-2026, DIARIO §23), así que
    iOS ya no pinta la web debajo ni la difumina; la cabecera vuelve a su sitio (se quitan los +20 px de §16). */
+/* iOS 26 tiñe la barra de estado con el fondo de la página (no con theme-color) y lo funde con la cabecera: en modo app
+   el fondo de html y body es el turquesa de la cabecera, así la barra y el fundido salen del mismo color (DIARIO §23). */
+html.pwa,html.pwa body{background:var(--brand)}
 /* Título principal de la ficha: escudo + nombre + pastillas; destello en toda la tarjeta al entrar */
 .fTitleCard{margin-bottom:16px;box-shadow:0 6px 20px rgba(11,42,58,.22),0 2px 6px rgba(11,42,58,.14)}
 .fTop{padding:16px 15px 13px}
