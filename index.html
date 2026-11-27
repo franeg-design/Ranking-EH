@@ -7,7 +7,7 @@
 <meta name="description" content="Mejores marcas, puntos FINA y mínimas de la natación de Álava, Bizkaia, Gipuzkoa y Navarra: alevín, infantil, júnior, absoluto joven y absoluto, femenino y masculino. Piscinas de 25 y 50 m." />
 <meta name="theme-color" content="#0e7c93" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="apple-mobile-web-app-title" content="Ranking EH" />
 <link rel="manifest" href="./manifest.json" />
 <script>try{if(navigator.standalone===true||matchMedia("(display-mode: standalone)").matches||matchMedia("(display-mode: fullscreen)").matches)document.documentElement.classList.add("pwa");}catch(e){}</script>
@@ -762,14 +762,8 @@ body.updOn .backFloat{bottom:calc(92px + env(safe-area-inset-bottom))}
 body.mfich .head{display:none}
 body.mfich .searchwrap{display:none}
 body.mfich .body{padding-top:calc(10px + env(safe-area-inset-top))}
-/* App instalada en la pantalla de inicio (iPhone, 24-nov-2026, DIARIO §16): iOS difumina la barra de estado
-   y el difuminado baja por debajo de la zona segura, encima de «Natación / Temporada». Solo en modo app se baja
-   la cabecera 20 px más; en el navegador no cambia nada.
-   ⚠️ Va por la clase `pwa` en <html> (script de <head>), NO por `@media (display-mode: standalone)`: sin
-   manifest.json, iOS abre la app en pantalla completa por `apple-mobile-web-app-capable` pero esa media query
-   no casa (primer intento, efd6805, no hizo nada en el iPhone de Fran). `navigator.standalone` sí. */
-html.pwa .head{padding-top:calc(40px + env(safe-area-inset-top))}
-html.pwa body.mfich .body{padding-top:calc(30px + env(safe-area-inset-top))}
+/* App instalada (iPhone): la barra de estado es opaca (`status-bar-style` default, 27-nov-2026, DIARIO §23), así que
+   iOS ya no pinta la web debajo ni la difumina; la cabecera vuelve a su sitio (se quitan los +20 px de §16). */
 /* Título principal de la ficha: escudo + nombre + pastillas; destello en toda la tarjeta al entrar */
 .fTitleCard{margin-bottom:16px;box-shadow:0 6px 20px rgba(11,42,58,.22),0 2px 6px rgba(11,42,58,.14)}
 .fTop{padding:16px 15px 13px}
