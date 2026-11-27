@@ -1285,8 +1285,9 @@ let poolSel="25",_P50=false;
      · {p,x:"solo júnior"} (aclaración). Sin `dias` = programa no publicado.
    Fuentes: calendario FAN 26/27 (29-oct-2026), reglamentos Liga FAN (7-oct) y Liga Escolar DFA
    (18-oct), normativas RFEN 26/27 (27-400…27-477, 26-408), calendario FNN-NIF 26/27 (fechas de los
-   Ctos. de Euskal Herria) y web del CN Menditxo (Olentzero). Consultadas el 2-nov-2026. */
-const CAL_ACT="2-nov-2026";
+   Ctos. de Euskal Herria) y web del CN Menditxo (Olentzero). Consultadas el 2-nov-2026.
+   Bizkaia, Gipuzkoa y Navarra (con `prov`): calendarios FBN, GIF y FNN-NIF y sus circulares, 27-nov-2026 (DIARIO §18). */
+const CAL_ACT="27-nov-2026";
 const CALENDARIO={"2026/27":[
  /* ---- Liga Escolar DFA · alevín (2014-2015) — Mendizorroza 25 m salvo Laudio ---- */
  {id:"esc1",n:"1ª Jornada Escolar DFA",f:"2026-10-24",cat:["alevin"],lugar:"CD Mendizorroza, Vitoria-Gasteiz",pis:25,h:"16:30",cal:"15:30",reg:"esc",ins:"fed",
@@ -1324,6 +1325,46 @@ const CALENDARIO={"2026/27":[
  {id:"zadv",n:"Trofeo Verano CN Zadorra",f:"2027-06-06",cat:["alevin","infantil","junior","absoluta"],lugar:"Piscinas de Iparralde, Vitoria-Gasteiz",h:"10:00",cal:"9:00"},
  {id:"alav",n:"Cto Álava Verano",d:"2027-06-12",f:"2027-06-13",cat:["alevin","infantil"],lugar:"CD Mendizorroza, Vitoria-Gasteiz",pis:25,h:"Sáb 10:00 y 17:00, dom 10:00",nota:"Alevín e infantil, escolar y federado."},
  {id:"alaj",n:"Cto Álava Verano Jun/Sub20/Sen",d:"2027-06-19",f:"2027-06-20",cat:["junior","absoluta"],lugar:"CD Mendizorroza, Vitoria-Gasteiz",pis:25,h:"Sáb 10:00 y 17:00, dom 10:00"},
+ /* ---- Bizkaia (calendario FBN y circulares 961, 962; la web solo publica hasta diciembre) ---- */
+ {id:"bal3",n:"3ª Jornada Alevín Bizkaia",f:"2026-12-12",cat:["alevin"],prov:"Bizkaia",lugar:"Abadiño, Markina, Getxo y Amorebieta-Etxano",
+  dias:[{pr:["25 Espalda","400 Libre","50 Mariposa","300 Libre","100 Braza","50 Espalda","75 Mariposa"]}]},
+ {id:"bgpb",n:"Gran Premio Bizkaia",d:"2026-12-12",f:"2026-12-13",cat:["infantil","junior","absoluta"],prov:"Bizkaia",lugar:"Barakaldo",h:"Sáb 10:30 y 17:00, dom 10:30",
+  nota:"XX Gran Premio Bizkaia Individual. Tres pruebas por nadador; mínima en 400, 800 y 1500.",
+  dias:[{f:"2026-12-12",pr:["1500 Libre","200 Braza","100 Estilos","200 Libre","50 Espalda","100 Mariposa","400 Libre","50 Mariposa","200 Espalda","100 Braza","50 Libre","400 Estilos"]},
+        {f:"2026-12-13",pr:["800 Libre","100 Espalda","200 Estilos","100 Libre","200 Mariposa","50 Braza"]}]},
+ /* ---- Gipuzkoa (hoja del calendario GIF 26/27 y circulares 2 y 3) ---- */
+ {id:"gli4",n:"4ª Jornada Liga Gipuzkoa",f:"2026-12-12",cat:["infantil","junior","absoluta"],prov:"Gipuzkoa",lugar:"Zumaia, Hernani, Lazkao y Legazpi",
+  dias:[{pr:["800 Libre","50 Libre","100 Braza","100 Espalda","200 Libre","100 Estilos","50 Mariposa","200 Braza"]}]},
+ {id:"girh",n:"Trofeo Irun Hiria",f:"2026-12-12",cat:["alevin"],prov:"Gipuzkoa",lugar:"Azken Portu, Irun",pis:25,h:"16:00",nota:"XXXIV Irun Hiria Saria."},
+ {id:"geib",n:"Copa de Navidad Eibar",f:"2026-12-19",cat:["alevin"],prov:"Gipuzkoa",lugar:"Piscina Ipurua, Eibar",pis:25,h:"16:00",nota:"XXXVII Igeriketako Gabon Kopa."},
+ {id:"gnav",n:"Trofeo Internacional de Navidad",f:"2026-12-29",cat:["alevin","infantil","junior","absoluta"],prov:"Gipuzkoa",lugar:"Piscinas Paco Yoldi, Donostia",pis:50,
+  nota:"XLIII Gabonetako Nazioarteko Txapelketa. Desde 12 años."},
+ {id:"gcij",n:"Cto Gipuzkoa Invierno Jun/Abs",d:"2027-01-16",f:"2027-01-17",cat:["junior","absoluta"],prov:"Gipuzkoa",lugar:"Hernani"},
+ {id:"gcii",n:"Cto Gipuzkoa Invierno Infantil",d:"2027-02-06",f:"2027-02-07",cat:["infantil"],prov:"Gipuzkoa",lugar:"Azken Portu, Irun"},
+ {id:"gal5",n:"5ª Jornada Alevín Gipuzkoa",f:"2027-02-27",cat:["alevin"],prov:"Gipuzkoa",lugar:"Bidebieta, Zumaia, Tolosa y Bergara"},
+ {id:"gal6",n:"6ª Jornada Alevín Gipuzkoa",f:"2027-03-20",cat:["alevin"],prov:"Gipuzkoa",lugar:"Benta Berri, Zarautz, Lasarte-Oria y Oñati"},
+ {id:"gal7",n:"7ª Jornada Alevín Gipuzkoa",f:"2027-04-24",cat:["alevin"],prov:"Gipuzkoa",lugar:"Benta Berri, Irun, Hernani y Eibar"},
+ {id:"gcvi",n:"Cto Gipuzkoa Verano Infantil",d:"2027-06-12",f:"2027-06-13",cat:["infantil"],prov:"Gipuzkoa",lugar:"Tolosa"},
+ {id:"gcvj",n:"Cto Gipuzkoa Verano Jun/Abs",d:"2027-06-19",f:"2027-06-20",cat:["junior","absoluta"],prov:"Gipuzkoa",lugar:"Bergara"},
+ /* ---- Navarra (calendario FNN-NIF 26/27 «DEFINITIVO»; sede A y sede B) ---- */
+ {id:"nal2",n:"2ª Jornada Alevín Navarra",f:"2026-12-12",cat:["alevin"],prov:"Navarra",lugar:"Burlada y Etxabakoitz"},
+ {id:"nin3",n:"3ª Jornada Infantil Navarra",f:"2026-12-13",cat:["infantil","junior"],prov:"Navarra",lugar:"Guelbenzu/Lagunak y Oberena"},
+ {id:"ntij",n:"Trials Navarra Inf-Jun",d:"2026-12-19",f:"2026-12-20",cat:["infantil","junior"],prov:"Navarra",lugar:"CD Amaya, Pamplona"},
+ {id:"ntal",n:"Trials Navarra Alevín",d:"2027-01-16",f:"2027-01-17",cat:["alevin"],prov:"Navarra",lugar:"Piscina Guelbenzu, Pamplona"},
+ {id:"nabi",n:"Cto Navarra Absoluto Invierno",d:"2027-01-16",f:"2027-01-17",cat:["infantil","junior","absoluta"],prov:"Navarra",lugar:"Piscina Guelbenzu, Pamplona"},
+ {id:"nin4",n:"4ª Jornada Infantil Navarra",f:"2027-01-23",cat:["infantil","junior"],prov:"Navarra",lugar:"Guelbenzu y Oberena"},
+ {id:"nal3",n:"3ª Jornada Alevín Navarra",f:"2027-01-30",cat:["alevin"],prov:"Navarra",lugar:"Ardoi y Mendialdea"},
+ {id:"nal4",n:"4ª Jornada Alevín Navarra",f:"2027-02-13",cat:["alevin"],prov:"Navarra",lugar:"Arenas y Mendialdea"},
+ {id:"nli2",n:"2ª Jornada Liga Navarra",f:"2027-02-27",cat:["alevin","infantil","junior","absoluta"],prov:"Navarra",lugar:"Anaitasuna, Pamplona"},
+ {id:"nin5",n:"5ª Jornada Infantil Navarra",f:"2027-03-06",cat:["infantil","junior"],prov:"Navarra",lugar:"Tafalla y Sakana"},
+ {id:"nal5",n:"5ª Jornada Alevín Navarra",f:"2027-03-13",cat:["alevin"],prov:"Navarra",lugar:"Guelbenzu/Lagunak y Oberena"},
+ {id:"nli3",n:"3ª Jornada Liga Navarra",f:"2027-04-10",cat:["alevin","infantil","junior","absoluta"],prov:"Navarra",lugar:"Piscina Guelbenzu, Pamplona"},
+ {id:"nal6",n:"6ª Jornada Alevín Navarra",f:"2027-04-17",cat:["alevin"],prov:"Navarra",lugar:"Burlada y Aranguren"},
+ {id:"nin6",n:"6ª Jornada Infantil Navarra",f:"2027-04-24",cat:["infantil","junior"],prov:"Navarra",lugar:"Arenas y CNP"},
+ {id:"nal7",n:"7ª Jornada Alevín Navarra",f:"2027-05-08",cat:["alevin"],prov:"Navarra",lugar:"Campoamor y Sakana"},
+ {id:"nin7",n:"7ª Jornada Infantil Navarra",f:"2027-05-15",cat:["infantil","junior"],prov:"Navarra",lugar:"Guelbenzu y Aranguren"},
+ {id:"nfai",n:"Final Navarra Alevín-Infantil",d:"2027-06-12",f:"2027-06-13",cat:["alevin","infantil"],prov:"Navarra",lugar:"Sede por confirmar"},
+ {id:"nabv",n:"Cto Navarra Absoluto Verano",d:"2027-06-26",f:"2027-06-27",cat:["infantil","junior","absoluta"],prov:"Navarra",lugar:"Anaitasuna, Pamplona"},
  /* ---- Euskal Herria (fechas del calendario FNN-NIF 26/27; programas sin publicar) ---- */
  {id:"ehld",n:"Cto EH Larga Distancia",f:"2026-12-12",cat:["infantil","junior","absoluta"],lugar:"Piscina Guelbenzu, Pamplona"},
  {id:"ehji",n:"Cto EH Junior-Abs Invierno",d:"2027-02-06",f:"2027-02-07",cat:["junior","absoluta"],lugar:"CD Amaya, Pamplona"},
