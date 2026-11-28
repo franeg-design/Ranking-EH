@@ -393,6 +393,7 @@ select.seasonSel{appearance:none;-webkit-appearance:none;padding:5px 24px 5px 12
    dorado. Mientras está, se oculta el ⓘ y el botón flotante de volver sube por encima de ella. */
 .updBar{position:fixed;left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom));max-width:516px;margin:0 auto;z-index:58;display:none;align-items:center;gap:10px;background:var(--brand-deep);color:#fff;border-radius:16px;padding:12px 12px 12px 16px;box-shadow:0 8px 24px rgba(11,42,58,.35);font:600 13px 'Inter',system-ui,sans-serif;cursor:pointer}
 .updBar span{flex:1}.updBar small{display:block;font:400 11px 'Inter',system-ui,sans-serif;opacity:.8;margin-top:2px}
+.updL{display:flex;flex-direction:column;gap:6px}.updT{display:inline-flex;align-items:center;gap:5px;font:700 9px 'Space Mono',monospace;letter-spacing:.06em;font-style:normal;opacity:.92}.updT em{width:8px;height:8px;border-radius:999px;display:inline-block}.updN{font:600 13px 'Inter',system-ui,sans-serif;margin-top:1px}
 .updBar b{background:var(--gold);color:var(--ink);border-radius:999px;padding:8px 14px;font:700 12px 'Inter',system-ui,sans-serif}
 body.updOn .updBar{display:flex}body.updOn .infoFab{display:none}
 body.updOn .backFloat{bottom:calc(92px + env(safe-area-inset-bottom))}
@@ -5438,8 +5439,8 @@ function renderProfile(vw){
   animateBars(vw);
 }
 
-async function boot(){const pIns=fetch("inscritos.csv",{cache:"no-store"}).then(r=>r&&r.ok?r.text():"").catch(()=>"");const pCla=fetch("clasificaciones.csv",{cache:"no-store"}).then(r=>r&&r.ok?r.text():"").catch(()=>"");let txt=null;try{const res=await fetch("data.csv",{cache:"no-store"});if(res.ok){const t=await res.text();if(parseCSV(t).length){txt=t;DATA_HUELLA=huellaTxt(t);}}}catch(e){}if(txt===null)txt=SAMPLE_CSV;
-  INSCRITOS=parseIns(await pIns);
+async function boot(){const pIns=fetch("inscritos.csv",{cache:"no-store"}).then(r=>r&&r.ok?r.text():"").catch(()=>"");const pCla=fetch("clasificaciones.csv",{cache:"no-store"}).then(r=>r&&r.ok?r.text():"").catch(()=>"");let txt=null;try{const res=await fetch("data.csv",{cache:"no-store"});if(res.ok){const t=await res.text();if(parseCSV(t).length){txt=t;DATA_HUELLA=huellaTxt(t);DATA_MAP=mapaCSV(t);}}}catch(e){}if(txt===null)txt=SAMPLE_CSV;
+  const tIns=await pIns;INSCRITOS=parseIns(tIns);INS_MAP=mapaCSV(tIns);
   ALLRECS=parseCSV(txt);_B50=null;_TPL=null;_T1=null;_PREVB=null;_PMMP=null;_ANIO=null;
   applySex();
   /* (§4.86) La clasificación completa llega después, sin hacer esperar a la app. */
@@ -5713,29 +5714,62 @@ try{
 }catch(e){}
 /* AVISO DE DATOS NUEVOS (Fran, 24-nov-2026; DIARIO §12). En el iPhone, abierta desde el icono de la
    pantalla de inicio, la app no tiene botón de recargar y el sistema la «despierta» sin arrancarla de nuevo:
-   seguía con el data.csv del primer arranque. Al volver a la app (como mucho una vez cada 2 min) se pide
-   data.csv otra vez y, si su huella no es la del arranque, sale la franja «Hay resultados nuevos»; al
-   tocarla se recarga. No recarga sola para no sacar a nadie de la pantalla en la que está.
-   VERSIÓN NUEVA DE LA APP (Fran, 24-nov-2026; DIARIO §14). Igual con index.html: su huella se toma 5 s
-   después de arrancar (una petición más, sin estorbar la carga) y, si al volver ha cambiado, la franja dice
-   «Nueva versión de la app · Refresca para actualizar». Manda sobre la de datos: al recargar entra todo. */
-var DATA_HUELLA=null,APP_HUELLA=null,UPD_ULT=Date.now(),UPD_TIPO=null;
+   seguía con el data.csv del primer arranque. Al volver a la app (como mucho una vez cada 2 min) se piden
+   otra vez los archivos y, si cambian, sale la franja de abajo; al tocarla se recarga. No recarga sola para
+   no sacar a nadie de la pantalla en la que está.
+   VERSIÓN NUEVA DE LA APP (DIARIO §14): la huella de index.html se toma 5 s después de arrancar.
+   QUÉ HA SALIDO (Fran, 28-nov-2026; DIARIO §29): la franja dice de qué es, con una línea por aviso
+   (etiqueta de tipo y provincia, variante B): resultados de cada jornada de data.csv que entra o cambia,
+   series de cada competición de inscritos.csv que entra o cambia, y mínimas de una temporada nueva en
+   TABLES de index.html. Orden: resultados, series, mínimas; dos líneas como mucho y «y N más». Si solo
+   cambia la app, «Nueva versión de la app». Sale a todos, sin filtrar por ámbito (decisión de Fran). */
+var DATA_HUELLA=null,DATA_MAP=null,INS_MAP=null,APP_HUELLA=null,UPD_ULT=Date.now(),UPD_TIPO=null,
+    UPD_RES=[],UPD_SER=[],UPD_MIN=[],UPD_APP=false;
 function huellaTxt(t){let h=2166136261;for(let i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619);}return t.length+":"+(h>>>0);}
+/* Huella por competición de un CSV: clave «Fecha|Competicion» → huella de sus líneas. Sin parseCSV, que
+   rehace ALLDSQ/ALLNOOF y no debe tocarse aquí. */
+function mapaCSV(t){const M={};if(!t)return M;const L=t.replace(/\r/g,"").split("\n");if(!L.length)return M;
+  const H=splitLine(L[0]).map(h=>h.trim()),iF=H.indexOf("Fecha"),iC=H.indexOf("Competicion");if(iF<0||iC<0)return M;
+  const G={};for(let i=1;i<L.length;i++){if(!L[i].trim())continue;const c=splitLine(L[i]);const k=(c[iF]||"").trim()+"|"+(c[iC]||"").trim();(G[k]=G[k]||[]).push(L[i]);}
+  Object.keys(G).forEach(k=>M[k]=huellaTxt(G[k].join("\n")));return M;}
+function cambiosMapa(viejo,nuevo){return Object.keys(nuevo).filter(k=>viejo[k]!==nuevo[k]).sort();}
+/* Temporadas con mínimas en el bloque TABLES de un index.html (por llaves: los tiempos no llevan llaves). */
+function tempMinTxt(t){const i=t.indexOf("const TABLES=");if(i<0)return[];let j=t.indexOf("{",i),d=0,k=j;
+  for(;k<t.length;k++){const ch=t[k];if(ch==="{")d++;else if(ch==="}"){d--;if(!d)break;}}
+  const B=t.slice(j,k+1),out=[],re=/"(\d{4}\/\d{2})":\{/g;let m;const pos=[];
+  while((m=re.exec(B)))pos.push([m[1],m.index]);
+  pos.forEach((x,n)=>{const seg=B.slice(x[1],n+1<pos.length?pos[n+1][1]:B.length);if(/MIN_EH/.test(seg))out.push(x[0]);});
+  return out;}
+function tempMinApp(){try{return Object.keys(TABLES).filter(s=>TABLES[s]&&TABLES[s].MIN_EH);}catch(e){return[];}}
 function urlApp(){return location.href.split("#")[0].split("?")[0];}
 function pedirTxt(u){return fetch(u,{cache:"no-store"}).then(r=>r&&r.ok?r.text():null).catch(()=>null);}
-function avisoUpd(tipo){
-  if(UPD_TIPO==="app")return;UPD_TIPO=tipo;const u=document.querySelector(".updBar");if(!u)return;
-  u.innerHTML=tipo==="app"?'<span>Nueva versión de la app<small>Refresca para actualizar</small></span><b>Refrescar</b>'
-    :'<span>Hay resultados nuevos<small>Toca para cargarlos</small></span><b>Actualizar</b>';
+function updProv(p){return p&&p!=="all"&&PROV_COL[p]?p:null;}
+function updLinea(tipo,nombre,p){const c=p?PROV_COL[p][0]:"var(--gold)";
+  return `<div class="updI"><i class="updT"><em style="background:${c}"></em>${tipo}${p?" · "+esc(p).toUpperCase():""}</i><div class="updN">${esc(nombre)}</div></div>`;}
+function pintaUpd(){
+  const u=document.querySelector(".updBar");if(!u)return;
+  const L=[];
+  UPD_RES.forEach(k=>{const n=k.split("|").slice(1).join("|");let p=null;try{p=updProv(compProv(k));}catch(e){}L.push(updLinea("RESULTADOS",n,p));});
+  UPD_SER.forEach(k=>{const n=k.split("|").slice(1).join("|");let p=null;try{const e=(CALENDARIO[season]||[]).find(e=>e.n===n);if(e)p=updProv(calProv(e));}catch(e){}L.push(updLinea("SERIES",n,p));});
+  UPD_MIN.forEach(s=>L.push(updLinea("MÍNIMAS","Nuevas mínimas "+s,null)));
+  if(!L.length&&!UPD_APP)return;
+  const datos=UPD_RES.length+UPD_SER.length>0;
+  if(!L.length)L.push(updLinea("APP","Nueva versión de la app",null));
+  const vis=L.length>3?L.slice(0,2):L,mas=L.length-vis.length;
+  UPD_TIPO=UPD_APP?"app":"datos";
+  u.innerHTML=`<span class="updL">${vis.join("")}${mas?`<small>y ${mas} más</small>`:""}</span><b>${datos?"Actualizar":"Refrescar"}</b>`;
   document.body.classList.add("updOn");
 }
 function mirarDatosNuevos(){
-  if(UPD_TIPO==="app")return;
   const ahora=Date.now();if(ahora-UPD_ULT<120000)return;UPD_ULT=ahora;
-  if(APP_HUELLA!==null&&typeof location!=="undefined")pedirTxt(urlApp()).then(t=>{
-    if(t&&/<html/i.test(t)&&huellaTxt(t)!==APP_HUELLA)avisoUpd("app");});
-  if(DATA_HUELLA!==null&&UPD_TIPO===null)pedirTxt("data.csv").then(t=>{
-    if(t&&parseCSV(t).length&&huellaTxt(t)!==DATA_HUELLA)avisoUpd("datos");});
+  if(APP_HUELLA!==null&&typeof location!=="undefined"&&!UPD_APP)pedirTxt(urlApp()).then(t=>{
+    if(!t||!/<html/i.test(t)||huellaTxt(t)===APP_HUELLA)return;
+    UPD_APP=true;const ya=tempMinApp();UPD_MIN=tempMinTxt(t).filter(s=>ya.indexOf(s)<0);pintaUpd();});
+  if(DATA_MAP!==null)pedirTxt("data.csv").then(t=>{
+    if(!t||huellaTxt(t)===DATA_HUELLA)return;const m=mapaCSV(t);if(!Object.keys(m).length)return;
+    UPD_RES=cambiosMapa(DATA_MAP,m);pintaUpd();});
+  if(INS_MAP!==null)pedirTxt("inscritos.csv").then(t=>{
+    if(t===null)return;UPD_SER=cambiosMapa(INS_MAP,mapaCSV(t));pintaUpd();});
 }
 try{
   const u=document.createElement("div");u.className="updBar";u.setAttribute("role","button");
