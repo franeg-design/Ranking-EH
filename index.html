@@ -473,6 +473,8 @@ body.updOn .backFloat{bottom:calc(92px + env(safe-area-inset-bottom))}
 .calSer{flex:0 0 auto;font-size:11px;font-weight:700;color:var(--good);background:#e3f4ec;border:1px solid #bfe3d0;border-radius:999px;padding:2px 8px;white-space:nowrap}
 .insPr{margin-top:9px}.insPr:first-of-type{margin-top:5px}.insSx{margin-left:7px;font-size:11px;font-weight:700;color:var(--muted);vertical-align:middle}
 .insSer{font-size:11px;font-weight:600;color:var(--muted);margin:6px 0 1px}
+.insSede{font-size:12px;font-weight:700;color:var(--brand-deep);margin:14px 0 2px;padding-top:8px;border-top:1px solid var(--line)}
+.insSede.pri{border-top:0;padding-top:0}
 .insSer .insH{color:var(--brand-deep);font-weight:700}
 .insNad{display:flex;gap:8px;align-items:baseline;font-size:13px;line-height:1.5}
 .insCa{flex:0 0 50px;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
@@ -3654,7 +3656,7 @@ function resPanel(CL,comp,FD,latest,pb,TBS){
   const fichas=new Set(ALLRECS.map(x=>x.nadadora));ALLNOOF.forEach(x=>fichas.add(x.nadadora));
   secs.forEach(k=>{const rows=R.filter(r=>r.num+"|"+r.sec===k);
     h+=`<div class="sumline"><span class="lbl">${esc(rows[0].sec)}</span><div class="rBh"><span>#</span><span>Nombre</span><span>Año</span><span>Club</span><span>Tiempo</span></div>`;
-    rows.forEach(r=>{const ala=!!CLUB_LOGOS[r.club];let ex="";
+    rows.forEach(r=>{const ala=!!CLUB_PROV[r.club];let ex="";
       if(r.dsq)ex=esc(r.motivo||"");
       else{const pts=esNoof(r.prueba)?0:fina(r.prueba,toCs(r.tiempo),FD,es50(comp));
         if(pts)ex+=`<span>${pts}&nbsp;<span class="pts">FINA</span></span>`;
@@ -3666,7 +3668,7 @@ function resPanel(CL,comp,FD,latest,pb,TBS){
       const link=ala&&fichas.has(r.nadadora);
       h+=`<div class="rB${ala?"":" ext"}${mioCls(r.nadadora)}"><span class="ps">${r.dsq?"—":esc(r.pos)}</span><span class="nm2${link?" rsN":""}"${link?` data-n="${esc(r.nadadora)}"`:""}>${mioSt(r.nadadora)}${esc(shortName(r.nadadora))}</span><span class="an">${esc(String(r.anio).slice(2))}</span><span class="cl">${esc(clubCorto(r.club))}</span><span class="tm mono">${r.dsq?'<span class="dsq">DSQ</span>':esc(r.tiempo)}</span>${ex?`<span class="ex">${ex}</span>`:""}</div>`;});
     h+=`</div>`;});
-  h+=`<div class="sumNote">Clasificación del acta oficial. En gris, ${sexFilter==="M"?"nadadores":"nadadoras"} de clubes de fuera de Álava. Toca un nombre para ver su ficha.${esCtoEsp(comp)||/^cto (eh|euskal)/i.test(comp)?" Solo las clasificaciones en las que nada alguien de Álava.":""}</div>`;
+  h+=`<div class="sumNote">Clasificación del acta oficial. En gris, ${sexFilter==="M"?"nadadores":"nadadoras"} de clubes de fuera de Euskal Herria. Toca un nombre para ver su ficha.${esCtoEsp(comp)||/^cto (eh|euskal)/i.test(comp)?" Solo las clasificaciones en las que nada alguien de Euskal Herria.":""}</div>`;
   return h;}
 /* Mínimas nuevas de una marca en SU competición (se rehacen con las marcas anteriores a esa fecha,
    como newMin). Era un bloque dentro de renderSummary; sale a función para que «Resultados» use la
@@ -3685,7 +3687,7 @@ function parseIns(t){const L=String(t||"").replace(/\r/g,"").split("\n").filter(
   const out=[];for(let i=1;i<L.length;i++){const c=splitLine(L[i]);const o={};H.forEach((h,k)=>o[h]=(c[k]??"").trim());
     if(!o.Nadadora||!o.Prueba||!o.Fecha)continue;
     out.push({competi:o.Competicion||"",fecha:o.Fecha,num:o.NumPrueba||o.Prueba,prueba:o.Prueba,nadadora:o.Nadadora,anio:o["Año"]||"",club:o.Club||"",
-      sexo:String(o.Sexo).trim().toUpperCase()==="M"?"M":"F",serie:+o.Serie||0,series:+o.Series||0,calle:+o.Calle||0,hora:o.Hora||""});}
+      sexo:String(o.Sexo).trim().toUpperCase()==="M"?"M":"F",serie:+o.Serie||0,series:+o.Series||0,calle:+o.Calle||0,hora:o.Hora||"",dia:o.Dia||"",sede:o.Sede||""});}
   return out;}
 function insDe(e){return INSCRITOS.filter(r=>r.fecha===e.f&&calNorm(r.competi)===calNorm(e.n));}
 /* Próximas con lista de salida: sin acta y sin haber pasado. Como el calendario (D-CAL): solo en la
@@ -3713,12 +3715,16 @@ function insBloque(e,sx){
   /* Por NÚMERO de prueba, no por nombre: un mismo día puede haber dos «25 Braza» (benjamín y 11-16).
      En el orden del programa (número de prueba); un número no numérico queda donde venía. */
   const nums=[...new Set(A.map(r=>r.num))],pos=n=>{const v=parseFloat(n);return isNaN(v)?Infinity:v;};
+  /* SEDES (Fran, 28-nov-2026, DIARIO §25): una jornada en varias piscinas a la vez (Gipuzkoa, Navarra) lleva la
+     sede en cada fila; su rótulo sale cada vez que cambia, en el orden del programa de cada sede. */
+  let sedeAnt=null;
   nums.map((n,i)=>[n,i]).sort((a,b)=>(pos(a[0])-pos(b[0]))||(a[1]-b[1])).map(x=>x[0]).forEach(n=>{
     const ser=[...new Set(A.filter(r=>r.num===n).map(r=>r.serie))].sort((a,b)=>a-b);
     const r0=A.find(r=>r.num===n);
+    if(r0.sede&&r0.sede!==sedeAnt)h+=`<div class="insSede${sedeAnt===null?" pri":""}">📍 ${esc(r0.sede)}</div>`;sedeAnt=r0.sede;
     h+=`<div class="insPr${r0.sexo!==sx?" otro":""}">${insChip(r0.prueba)}${r0.sexo!==sx?`<span class="insSx">${r0.sexo==="M"?"Masc.":"Fem."}</span>`:""}</div>`;
     ser.forEach(s=>{const S=A.filter(r=>r.num===n&&r.serie===s).sort((a,b)=>a.calle-b.calle);
-      h+=`<div class="insSer">Serie ${s}${S[0].series?" de "+S[0].series:""}${S[0].hora?` · <span class="insH">~${esc(S[0].hora)}</span>`:""}</div>`
+      h+=`<div class="insSer">Serie ${s}${S[0].series?" de "+S[0].series:""}${S[0].hora?` · <span class="insH">${S[0].dia?esc(S[0].dia)+" ":""}~${esc(S[0].hora)}</span>`:""}</div>`
         +S.map(r=>insNad(r,!enCat(r))).join("");});});
   return h+`<div class="insNota">Todas las pruebas y series de chicas y chicos, en el orden del programa; en gris, quien no es del sexo o la categoría elegidos. ~ = hora estimada de la serie; es orientativa, conviene estar con margen.</div></div>`;}
 /* Un renglón de serie: calle, nombre, año y club. `otra` = de otra edad (gris); `yo` = la de la ficha. */
@@ -3735,7 +3741,7 @@ function insFicha(name){const hoy=hoyISO();let h="";
          estado vive en INS_OPEN para que un repintado no lo cierre. */
       +`<div class="insRows">`+L.map(r=>{const k=e.id+"|"+r.num+"|"+r.serie,o=INS_OPEN.has(k)?" open":"",ka=esc(k);
         const S=insDe(e).filter(x=>x.num===r.num&&x.serie===r.serie).sort((a,b)=>a.calle-b.calle);
-        return `<span class="insTg${o}" data-ik="${ka}">${insChip(r.prueba)}</span><span class="insSC insTg${o}" data-ik="${ka}">Serie ${r.serie}${r.series?" de "+r.series:""} · Calle ${r.calle}</span><span class="insT insTg${o}" data-ik="${ka}">${r.hora?"~"+esc(r.hora):""}<span class="pchev">▾</span></span>`
+        return `<span class="insTg${o}" data-ik="${ka}">${insChip(r.prueba)}</span><span class="insSC insTg${o}" data-ik="${ka}">${r.sede?esc(r.sede)+" · ":""}Serie ${r.serie}${r.series?" de "+r.series:""} · Calle ${r.calle}</span><span class="insT insTg${o}" data-ik="${ka}">${r.hora?(r.dia?esc(r.dia)+" ":"")+"~"+esc(r.hora):""}<span class="pchev">▾</span></span>`
           +`<div class="insHeat${o}" data-ik="${ka}">`+S.map(x=>insNad(x,false,x.nadadora===name)).join("")+`</div>`;}).join("")
       +`</div></div>`;});
   return h;}
